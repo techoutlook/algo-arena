@@ -40,13 +40,15 @@ function Navbar() {
           ))}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden text-white relative z-50 focus:outline-none"
-          onClick={toggleMenu}
-        >
-          <Menu size={28} />
-        </button>
+        {/* Mobile Menu Button (Only Shows When Menu is Closed) */}
+        {!isOpen && (
+          <button
+            className="md:hidden text-white relative z-50 focus:outline-none"
+            onClick={toggleMenu}
+          >
+            <Menu size={28} />
+          </button>
+        )}
       </div>
 
       {/* Mobile Menu (Slides from Right) */}
