@@ -13,12 +13,14 @@ function App() {
       <div className="min-h-screen flex flex-col bg-gray-50">
         <Navbar />
         <ScrollToTop /> {/* Ensures scroll resets on navigation */}
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contacts" element={<Contacts />} />
-          <Route path="/products" element={<Products />} />
-        </Routes>
+        <div className="pt-20">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contacts" element={<Contacts />} />
+            <Route path="/products" element={<Products />} />
+          </Routes>
+        </div>
         <Footer />
       </div>
     </>
