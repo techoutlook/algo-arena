@@ -46,8 +46,8 @@ const Home = () => {
       </section>
 
       {/* Featured Problems */}
-      <section className="py-16 bg-gray-800">
-        <h2 className="text-3xl font-bold text-center mb-8">
+      <section className="py-16 bg-gray-900 text-white text-center">
+        <h2 className="text-3xl font-bold mb-8 text-green-500">
           Featured Problems
         </h2>
         <div className="grid md:grid-cols-3 gap-6 px-10">
@@ -58,12 +58,17 @@ const Home = () => {
       </section>
 
       {/* Why AlgoArena */}
-      <section className="py-16 text-center">
-        <h2 className="text-3xl font-bold mb-8">Why AlgoArena?</h2>
+      <section className="py-16 text-center bg-gray-900 text-white">
+        <h2 className="text-3xl font-bold mb-8 text-green-500">
+          Why <span className="text-green-500">AlgoArena?</span>
+        </h2>
         <div className="grid md:grid-cols-2 gap-8 px-10">
           {whyAlgoArena.map((item, index) => (
-            <div key={index} className="bg-gray-800 p-6 rounded-lg shadow-lg">
-              <h3 className="text-xl font-semibold">{item.title}</h3>
+            <div
+              key={index}
+              className="bg-gray-800 p-6 rounded-lg shadow-lg border border-green-500"
+            >
+              <h3 className="text-xl font-semibold text-white">{item.title}</h3>
               <p className="text-gray-400 mt-2">{item.desc}</p>
             </div>
           ))}
@@ -71,11 +76,12 @@ const Home = () => {
       </section>
 
       {/* Call to Action */}
-      <section className="text-center py-16 bg-gradient-to-r from-purple-700 to-blue-600">
+      <section className="text-center py-16 bg-gray-900 text-white">
         <h2 className="text-3xl font-bold">
-          Ready to sharpen your algorithm skills?
+          Ready to <span className="text-green-500">sharpen</span> your
+          algorithm skills?
         </h2>
-        <button className="mt-5 px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition">
+        <button className="mt-5 px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition">
           Start Coding Now
         </button>
       </section>
@@ -98,24 +104,36 @@ Step.propTypes = {
   desc: PropTypes.string.isRequired,
 };
 
-// ✅ Problem Card Component with Prop Validation
+// ✅ Problem Card Component with Enhanced Spacing
 const ProblemCard = ({ problem }) => (
-  <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
-    <h3 className="text-xl font-semibold">{problem.title}</h3>
+  <div className="bg-gray-800 p-6 rounded-lg shadow-lg text-center space-y-4">
+    <h3 className="text-xl font-semibold text-white">{problem.title}</h3>
     <span
-      className={`inline-block mt-2 px-3 py-1 text-sm rounded ${
+      className={`inline-block px-4 py-1 text-sm font-semibold rounded-full ${
         problem.difficulty === "Easy"
-          ? "bg-green-600"
+          ? "bg-green-600 text-white"
           : problem.difficulty === "Medium"
-          ? "bg-yellow-600"
-          : "bg-red-600"
+          ? "bg-yellow-500 text-gray-900"
+          : "bg-red-600 text-white"
       }`}
     >
       {problem.difficulty}
     </span>
-    <p className="text-gray-400 mt-2">{problem.description}</p>
-    <button className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
-      Try This Problem
+    <p className="text-gray-300">{problem.description}</p>
+    <button
+      className={`mt-3 px-4 py-2 rounded-lg font-semibold transition ${
+        problem.difficulty === "Easy"
+          ? "bg-green-500 text-white hover:bg-green-600"
+          : problem.difficulty === "Medium"
+          ? "bg-yellow-500 text-gray-900 hover:bg-yellow-600"
+          : "bg-red-600 text-white hover:bg-red-700"
+      }`}
+    >
+      {problem.difficulty === "Easy"
+        ? "It could be easy for you."
+        : problem.difficulty === "Medium"
+        ? "Needs your focus to crack it."
+        : "Push your limits to solve this one!"}
     </button>
   </div>
 );
@@ -131,17 +149,17 @@ ProblemCard.propTypes = {
 // ✅ Sample Data
 const featuredProblems = [
   {
-    title: "Two Sum",
+    title: "Find Two Numbers for Sum", // 28 characters
     difficulty: "Easy",
     description: "Find two numbers that add up to a target value.",
   },
   {
-    title: "Longest Substring Without Repeating Characters",
+    title: "Find Longest Unique Substring", // 28 characters
     difficulty: "Medium",
     description: "Find the longest substring without repeating characters.",
   },
   {
-    title: "Merge K Sorted Lists",
+    title: "Merge Multiple Sorted Lists", // 28 characters
     difficulty: "Hard",
     description: "Merge multiple sorted linked lists into one sorted list.",
   },
