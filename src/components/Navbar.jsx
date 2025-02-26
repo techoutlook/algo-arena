@@ -1,45 +1,73 @@
-import { BiLogoReact } from "react-icons/bi";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
 
 function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+
+  const toggleMenu = () => setIsOpen(!isOpen);
+
+  const navLinks = [
+    { to: "/", label: "Home" },
+    { to: "/about", label: "About" },
+    { to: "/contacts", label: "Contacts" },
+    { to: "/products", label: "Products" },
+  ];
+
   return (
-    <nav className="bg-slate-800 shadow-lg flex items-center justify-around py-3 px-32 fixed top-0 left-0 w-full">
-      <Link to="/">
-        <span className="font-semibold text-lg flex items-center gap-3 text-blue-400">
-          <BiLogoReact className="text-6xl" />
-          <span className="font-semibold text-2xl">React Router</span>
-        </span>
-      </Link>
-
-      <div className="flex items-center gap-5 text-black">
-        <Link
-          to="/"
-          className="py-1 px-3 text-lg font-light text-white hover:text-sky-300 rounded-2xl hover:bg-slate-700 transition duration-300"
-        >
-          Home
+    <nav className="bg-gray-900 shadow-lg fixed top-0 left-0 w-full z-50">
+      <div className="flex items-center justify-between py-4 px-8">
+        {/* Logo */}
+        <Link to="/" className="text-white font-bold text-2xl">
+          Algo<span className="text-green-500">Arena</span>
         </Link>
 
-        <Link
-          to="/about"
-          className="py-1 px-3 text-lg font-light text-white hover:text-sky-300 rounded-2xl hover:bg-slate-700 transition duration-300"
-        >
-          About
-        </Link>
+        {/* Desktop Menu */}
+        <div className="hidden md:flex gap-6">
+          {navLinks.map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className={`py-2 px-4 text-lg font-medium rounded-xl transition duration-300 ${
+                location.pathname === to
+                  ? "text-green-400 bg-gray-800"
+                  : "text-white hover:text-green-400"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
 
-        <Link
-          to="/contacts"
-          className="py-1 px-3 text-lg font-light text-white hover:text-sky-300 rounded-2xl hover:bg-slate-700 transition duration-300"
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden text-white focus:outline-none"
+          onClick={toggleMenu}
         >
-          Contacts
-        </Link>
-
-        <Link
-          to="/products"
-          className="py-1 px-3 text-lg font-light text-white hover:text-sky-300 rounded-2xl hover:bg-slate-700 transition duration-300"
-        >
-          Products
-        </Link>
+          {isOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="md:hidden flex flex-col bg-gray-800 py-4 px-8 space-y-3">
+          {navLinks.map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className={`py-2 text-lg font-medium ${
+                location.pathname === to
+                  ? "text-green-400"
+                  : "text-white hover:text-green-400"
+              }`}
+              onClick={() => setIsOpen(false)}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      )}
     </nav>
   );
 }
