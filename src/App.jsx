@@ -1,9 +1,9 @@
 import { Routes, Route } from "react-router";
 import Navbar from "./components/Navbar";
 import Home from "./routes/Home";
-import About from "./routes/About";
-import Contacts from "./routes/Contact";
-import Products from "./routes/Products";
+import Blogs from "./routes/Blogs";
+import Contactus from "./routes/Contactus";
+import Codeplayground from "./routes/Codeplayground";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop"; // Import the ScrollToTop component
 
@@ -16,9 +16,9 @@ function App() {
         <div className="pt-20">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contacts" element={<Contacts />} />
-            <Route path="/products" element={<Products />} />
+            <Route path="/blogs" element={<Blogs />} />
+            <Route path="/contactus" element={<Contactus />} />
+            <Route path="/Codeplayground" element={<Codeplayground />} />
           </Routes>
         </div>
         <Footer />

@@ -1,4 +1,4 @@
-function Products() {
+function Codeplayground() {
   return (
     <div className="min-h-screen bg-slate-50 w-full flex items-center justify-center">
       <div className="flex flex-col items-start max-w-3xl gap-5">
@@ -11,4 +11,4 @@ function Products() {
   );
 }
 
-export default Products;
+export default Codeplayground;

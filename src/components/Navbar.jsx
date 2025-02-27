@@ -10,9 +10,9 @@ function Navbar() {
 
   const navLinks = [
     { to: "/", label: "Home" },
-    { to: "/about", label: "About" },
-    { to: "/contacts", label: "Contacts" },
-    { to: "/products", label: "Products" },
+    { to: "/blogs", label: "Blogs" },
+    { to: "/contactus", label: "Contact Us" },
+    { to: "/codeplayground", label: "Code Playground" },
   ];
 
   return (

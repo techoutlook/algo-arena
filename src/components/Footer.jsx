@@ -107,7 +107,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Resources */}
+          {/* Resources 
           <div>
             <h3 className="text-white font-semibold text-lg mb-4">Resources</h3>
             <ul className="space-y-2">
@@ -144,42 +144,42 @@ const Footer = () => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div>*/}
 
           {/* About & Legal */}
           <div>
-            <h3 className="text-white font-semibold text-lg mb-4">About</h3>
+            <h3 className="text-white font-semibold text-lg mb-4">Links</h3>
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="/about"
+                  to="/"
                   className="text-gray-400 hover:text-green-500 transition-colors"
                 >
-                  About Us
+                  Home
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/contacts"
+                  to="/blogs"
                   className="text-gray-400 hover:text-green-500 transition-colors"
                 >
-                  Contacts
+                  Blogs
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/privacy"
+                  to="/contactus"
                   className="text-gray-400 hover:text-green-500 transition-colors"
                 >
-                  Privacy Policy
+                  Contact Us
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/terms"
+                  to="/codeplayground"
                   className="text-gray-400 hover:text-green-500 transition-colors"
                 >
-                  Terms of Service
+                  Code Playground
                 </Link>
               </li>
             </ul>
