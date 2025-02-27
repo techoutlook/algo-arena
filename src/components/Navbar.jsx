@@ -16,7 +16,7 @@ function Navbar() {
   ];
 
   return (
-    <nav className="bg-gray-900 shadow-lg fixed top-0 left-0 w-full z-50 h-20">
+    <nav className="bg-gray-900 shadow-lg fixed top-0 left-0 w-full z-50 h-20 border-b border-gray-800">
       <div className="flex items-center justify-between py-4 px-8 relative">
         {/* Logo (Always Visible) */}
         <Link to="/" className="text-white font-bold text-2xl relative z-50">
