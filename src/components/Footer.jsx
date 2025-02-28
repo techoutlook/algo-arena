@@ -106,7 +106,10 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState({
+    success: false,
+    message: "Get the Latest News Delivered to Your Inbox!",
+  });
 
   const handleEmailChange = (e) => setEmail(e.target.value);
 
@@ -185,42 +188,49 @@ const Footer = () => {
                 Get notified about new problems and features
               </p>
             </div>
-            <form
-              onSubmit={addEmailToNewsletter}
-              className="flex flex-col sm:flex-row gap-2"
-            >
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={handleEmailChange}
-                disabled={isSubmitting}
-                className="bg-gray-800 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                aria-label="Email for newsletter"
-                required
-              />
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`${
-                  isSubmitting
-                    ? "bg-gray-600"
-                    : "bg-green-600 hover:bg-green-700"
-                } text-white px-4 py-2 rounded transition-colors`}
+            <div className="flex flex-col items-center">
+              <form
+                onSubmit={addEmailToNewsletter}
+                className="flex flex-col sm:flex-row gap-2"
               >
-                {isSubmitting ? "Subscribing..." : "Subscribe"}
-              </button>
-            </form>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={handleEmailChange}
+                  disabled={isSubmitting}
+                  className="bg-gray-800 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  aria-label="Email for newsletter"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`${
+                    isSubmitting
+                      ? "bg-gray-600"
+                      : "bg-green-600 hover:bg-green-700"
+                  } text-white px-4 py-2 rounded transition-colors`}
+                >
+                  {isSubmitting ? "Subscribing..." : "Subscribe"}
+                </button>
+              </form>
+              {subscriptionStatus && (
+                <p
+                  className={`text-sm mt-2 ${
+                    subscriptionStatus.message ===
+                    "Get the Latest News Delivered to Your Inbox!"
+                      ? "text-white"
+                      : subscriptionStatus.success
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {subscriptionStatus.message}
+                </p>
+              )}
+            </div>
           </div>
-          {subscriptionStatus && (
-            <p
-              className={`text-sm mt-2 ${
-                subscriptionStatus.success ? "text-green-400" : "text-red-400"
-              }`}
-            >
-              {subscriptionStatus.message}
-            </p>
-          )}
         </div>
       </div>
 
