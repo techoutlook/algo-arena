@@ -172,7 +172,7 @@ const ActionButton = memo(() => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate("/Codeplayground");
+    navigate("/codeplayground");
   };
 
   return (
@@ -262,7 +262,6 @@ const Home = () => {
   );
 };
 
-// Add display name to the main component
 Home.displayName = "Home";
 
 export default Home;
