@@ -1,5 +1,6 @@
 import { useEffect, useState, memo } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import { CheckCircle, Code, TrendingUp, UserCheck } from "lucide-react";
 import { db } from "../firebase";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -9,18 +10,18 @@ const DIFFICULTY_STYLES = {
   Easy: {
     badge: "bg-green-600 text-white",
     button: "bg-green-500 text-white hover:bg-green-600",
-    buttonText: "It could be easy for you."
+    buttonText: "It could be easy for you.",
   },
   Medium: {
     badge: "bg-yellow-500 text-gray-900",
     button: "bg-yellow-500 text-gray-900 hover:bg-yellow-600",
-    buttonText: "Needs your focus to crack it."
+    buttonText: "Needs your focus to crack it.",
   },
   Hard: {
     badge: "bg-red-600 text-white",
     button: "bg-red-600 text-white hover:bg-red-700",
-    buttonText: "Push your limits to solve this one!"
-  }
+    buttonText: "Push your limits to solve this one!",
+  },
 };
 
 // Memoized components to prevent unnecessary re-renders
@@ -31,7 +32,7 @@ const TypingDots = memo(() => (
     <span className="w-2 h-2 bg-green-500 rounded-full animate-bounce animation-delay-400"></span>
   </span>
 ));
-TypingDots.displayName = 'TypingDots';
+TypingDots.displayName = "TypingDots";
 
 const Step = memo(({ icon, title, desc }) => (
   <div className="flex flex-col items-center">
@@ -40,7 +41,7 @@ const Step = memo(({ icon, title, desc }) => (
     <p className="text-gray-400 mt-2">{desc}</p>
   </div>
 ));
-Step.displayName = 'Step';
+Step.displayName = "Step";
 Step.propTypes = {
   icon: PropTypes.element.isRequired,
   title: PropTypes.string.isRequired,
@@ -48,22 +49,27 @@ Step.propTypes = {
 };
 
 const ProblemCard = memo(({ problem }) => {
-  const styles = DIFFICULTY_STYLES[problem.difficulty] || DIFFICULTY_STYLES.Medium;
-  
+  const styles =
+    DIFFICULTY_STYLES[problem.difficulty] || DIFFICULTY_STYLES.Medium;
+
   return (
     <div className="bg-gray-800 p-6 rounded-lg shadow-lg text-center space-y-4">
       <h3 className="text-xl font-semibold text-white">{problem.title}</h3>
-      <span className={`inline-block px-4 py-1 text-sm font-semibold rounded-full ${styles.badge}`}>
+      <span
+        className={`inline-block px-4 py-1 text-sm font-semibold rounded-full ${styles.badge}`}
+      >
         {problem.difficulty}
       </span>
       <p className="text-gray-300">{problem.description}</p>
-      <button className={`mt-3 px-4 py-2 rounded-lg font-semibold transition ${styles.button}`}>
+      <button
+        className={`mt-3 px-4 py-2 rounded-lg font-semibold transition ${styles.button}`}
+      >
         {styles.buttonText}
       </button>
     </div>
   );
 });
-ProblemCard.displayName = 'ProblemCard';
+ProblemCard.displayName = "ProblemCard";
 ProblemCard.propTypes = {
   problem: PropTypes.shape({
     title: PropTypes.string.isRequired,
@@ -79,7 +85,7 @@ const FeatureBox = memo(({ title, desc }) => (
     <p className="text-gray-400 mt-2">{desc}</p>
   </div>
 ));
-FeatureBox.displayName = 'FeatureBox';
+FeatureBox.displayName = "FeatureBox";
 FeatureBox.propTypes = {
   title: PropTypes.string.isRequired,
   desc: PropTypes.string.isRequired,
@@ -109,23 +115,23 @@ const HOW_IT_WORKS_STEPS = [
   {
     icon: <TrendingUp size={40} className="text-green-500" />,
     title: "Choose Your Level",
-    desc: "Select from Easy, Medium, or Hard challenges."
+    desc: "Select from Easy, Medium, or Hard challenges.",
   },
   {
     icon: <Code size={40} className="text-green-500" />,
     title: "Solve Problems",
-    desc: "Write, test, and optimize your code in our editor."
+    desc: "Write, test, and optimize your code in our editor.",
   },
   {
     icon: <CheckCircle size={40} className="text-green-500" />,
     title: "Get Instant Feedback",
-    desc: "Receive immediate feedback with test cases."
+    desc: "Receive immediate feedback with test cases.",
   },
   {
     icon: <UserCheck size={40} className="text-green-500" />,
     title: "Level Up",
-    desc: "Unlock more challenges as you progress."
-  }
+    desc: "Unlock more challenges as you progress.",
+  },
 ];
 
 // Main component using custom hook for data fetching
@@ -161,12 +167,24 @@ const useHomeData = () => {
   return { heroQuote, heroMessage, featuredProblems };
 };
 
-const ActionButton = memo(() => (
-  <button className="mt-5 px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition">
-    Start Coding Now
-  </button>
-));
-ActionButton.displayName = 'ActionButton';
+// Updated Action Button with navigation
+const ActionButton = memo(() => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate("/Codeplayground");
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className="mt-5 px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition cursor-pointer"
+    >
+      Start Coding Now
+    </button>
+  );
+});
+ActionButton.displayName = "ActionButton";
 
 const Home = () => {
   const { heroQuote, heroMessage, featuredProblems } = useHomeData();
@@ -177,9 +195,7 @@ const Home = () => {
       <section className="text-center py-20 bg-gray-900 text-white">
         <h1 className="text-4xl font-bold">
           Master Algorithms,{" "}
-          <span className="text-green-500">
-            {heroQuote || <TypingDots />}
-          </span>
+          <span className="text-green-500">{heroQuote || <TypingDots />}</span>
         </h1>
         <p className="text-lg mt-3 text-gray-300">
           {heroMessage || <TypingDots />}
@@ -192,7 +208,12 @@ const Home = () => {
         <h2 className="text-3xl font-bold mb-8 text-green-500">How It Works</h2>
         <div className="grid md:grid-cols-4 gap-8 px-10">
           {HOW_IT_WORKS_STEPS.map((step, index) => (
-            <Step key={index} icon={step.icon} title={step.title} desc={step.desc} />
+            <Step
+              key={index}
+              icon={step.icon}
+              title={step.title}
+              desc={step.desc}
+            />
           ))}
         </div>
       </section>
@@ -242,6 +263,6 @@ const Home = () => {
 };
 
 // Add display name to the main component
-Home.displayName = 'Home';
+Home.displayName = "Home";
 
 export default Home;

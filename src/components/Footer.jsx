@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import {
-  FaGithub,
-  FaFacebook,
+  FaInstagram,
+  FaYoutube,
+  FaTelegram,
   FaTwitter,
   FaCode,
   FaFolderOpen,
@@ -35,18 +36,36 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4">
               <a
-                href="https://github.com/yourusername/algo-arena"
+                href="https://web.telegram.org/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white text-xl"
               >
-                <FaGithub />
+                <FaTelegram />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white text-xl">
-                <FaFacebook />
+              <a
+                href="https://www.instagram.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white text-xl"
+              >
+                <FaInstagram />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white text-xl">
+              <a
+                href="https://x.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white text-xl"
+              >
                 <FaTwitter />
+              </a>
+              <a
+                href="https://www.youtube.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white text-xl"
+              >
+                <FaYoutube />
               </a>
             </div>
           </div>
@@ -59,7 +78,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="/problems/easy"
+                  to="/Codeplayground"
                   className="text-gray-400 hover:text-green-500 transition-colors"
                 >
                   Easy Problems
@@ -67,7 +86,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/problems/medium"
+                  to="/Codeplayground"
                   className="text-gray-400 hover:text-green-500 transition-colors"
                 >
                   Medium Problems
@@ -75,7 +94,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/problems/hard"
+                  to="/Codeplayground"
                   className="text-gray-400 hover:text-green-500 transition-colors"
                 >
                   Hard Problems
@@ -83,7 +102,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/categories"
+                  to="/Codeplayground"
                   className="text-gray-400 hover:text-green-500 transition-colors"
                 >
                   All Categories
@@ -170,19 +189,19 @@ const Footer = () => {
             </p>
             <div className="flex space-x-6">
               <Link
-                to="/privacy"
+                to="/contactus"
                 className="text-sm text-gray-500 hover:text-gray-400 transition-colors flex items-center"
               >
                 <FaLock className="mr-1" /> Privacy
               </Link>
               <Link
-                to="/terms"
+                to="/contactus"
                 className="text-sm text-gray-500 hover:text-gray-400 transition-colors flex items-center"
               >
                 <FaFileAlt className="mr-1" /> Terms
               </Link>
               <Link
-                to="/cookies"
+                to="/contactus"
                 className="text-sm text-gray-500 hover:text-gray-400 transition-colors flex items-center"
               >
                 <FaCookieBite className="mr-1" /> Cookies
