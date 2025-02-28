@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { db } from "../firebase";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { Link } from "react-router-dom";
 import {
   FaInstagram,
@@ -17,6 +20,20 @@ import {
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState("");
+
+  async function addEmailToNewsletter() {
+    const newsletterRef = doc(db, "FooterSection", "NewsLetter");
+
+    try {
+      await updateDoc(newsletterRef, {
+        Emails: arrayUnion(email),
+      });
+      setEmail("");
+    } catch (error) {
+      console.error("Error adding email: ", error);
+    }
+  }
 
   return (
     <footer className="bg-gray-900 text-gray-300">
@@ -170,9 +187,14 @@ const Footer = () => {
               <input
                 type="email"
                 placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="bg-gray-800 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
               />
-              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors">
+              <button
+                onClick={addEmailToNewsletter}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors"
+              >
                 Subscribe
               </button>
             </div>
