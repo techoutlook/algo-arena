@@ -1,33 +1,35 @@
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { CheckCircle, Code, TrendingUp, UserCheck } from "lucide-react";
-import { fetchAndActivate, getValue } from "firebase/remote-config";
-import { remoteConfig } from "../firebase";
+import { db } from "../firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 const Home = () => {
-  async function fetchConfig() {
-    try {
-      console.log("Fetching remote config...");
-      const isFetched = await fetchAndActivate(remoteConfig);
-      console.log("Is Config Fetched?:", isFetched);
+  const [heroQoute, setHeroQoute] = useState("Loading...");
 
-      const welcomeMessage = getValue(
-        remoteConfig,
-        "herosectionqoute"
-      ).asString();
-      console.log("HeroSectionQoute:", welcomeMessage);
-    } catch (error) {
-      console.error("Error fetching or activating remote config:", error);
-    }
-  }
-  fetchConfig();
+  useEffect(() => {
+    const docRef = doc(db, "HomePage", "HeroSection");
+
+    // Real-time listener
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const quoteKey = data["WhichQoute"];
+        setHeroQoute(data["HeroSectionQuotes"][quoteKey]);
+      } else {
+        console.log("No such document!");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="bg-gray-900 text-white">
       {/* Hero Section */}
       <section className="text-center py-20 bg-gray-900 text-white">
         <h1 className="text-4xl font-bold">
-          Master Algorithms,{" "}
-          <span className="text-green-500">One Challenge at a Time</span>
+          Master Algorithms, <span className="text-green-500">{heroQoute}</span>
         </h1>
         <p className="text-lg mt-3 text-gray-300">
           Progressive coding challenges to elevate your programming skills
