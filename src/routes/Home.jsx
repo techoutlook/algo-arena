@@ -96,12 +96,18 @@ const Home = () => {
         <h2 className="text-3xl font-bold mb-8 text-green-500">
           Featured Problems
         </h2>
+
         <div className="grid md:grid-cols-3 gap-6 px-10">
-          {featuredProblems &&
-            featuredProblems.length > 0 &&
-            featuredProblems.map((problem, index) => (
-              <ProblemCard key={index} problem={problem} />
-            ))}
+          {featuredProblems === null
+            ? [...Array(3)].map((_, index) => (
+                <div
+                  key={index}
+                  className="h-40 bg-gray-700 animate-pulse rounded-lg"
+                ></div>
+              ))
+            : featuredProblems.map((problem, index) => (
+                <ProblemCard key={index} problem={problem} />
+              ))}
         </div>
       </section>
 
