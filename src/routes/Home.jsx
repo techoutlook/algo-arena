@@ -5,17 +5,19 @@ import { db } from "../firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 
 const Home = () => {
-  const [heroQoute, setHeroQoute] = useState("Loading...");
+  const [heroQoute, setHeroQoute] = useState(null);
+  const [heroMessage, setHeroMessage] = useState(null);
+  const [featuredProblems, setFeaturedProblems] = useState(null);
 
   useEffect(() => {
     const docRef = doc(db, "HomePage", "HeroSection");
 
-    // Real-time listener
+    // Single real-time listener
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        const quoteKey = data["WhichQoute"];
-        setHeroQoute(data["HeroSectionQuotes"][quoteKey]);
+        setHeroQoute(data["HeroSectionQuotes"]?.[data["WhichQoute"]]);
+        setHeroMessage(data["HeroSectionMessage"]?.[data["WhichMessage"]]);
       } else {
         console.log("No such document!");
       }
@@ -24,15 +26,43 @@ const Home = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const docRef = doc(db, "HomePage", "Featured Problems");
+
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setFeaturedProblems(data);
+      } else {
+        console.log("No such document!");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  console.log(featuredProblems);
+
+  const TypingDots = () => (
+    <span className="inline-flex gap-1">
+      <span className="w-2 h-2 bg-green-500 rounded-full animate-bounce"></span>
+      <span className="w-2 h-2 bg-green-500 rounded-full animate-bounce animation-delay-200"></span>
+      <span className="w-2 h-2 bg-green-500 rounded-full animate-bounce animation-delay-400"></span>
+    </span>
+  );
+
   return (
     <div className="bg-gray-900 text-white">
       {/* Hero Section */}
       <section className="text-center py-20 bg-gray-900 text-white">
         <h1 className="text-4xl font-bold">
-          Master Algorithms, <span className="text-green-500">{heroQoute}</span>
+          Master Algorithms,{" "}
+          <span className="text-green-500">
+            {heroQoute ? heroQoute : <TypingDots />}
+          </span>
         </h1>
         <p className="text-lg mt-3 text-gray-300">
-          Progressive coding challenges to elevate your programming skills
+          {heroMessage ? heroMessage : <TypingDots />}
         </p>
         <button className="mt-5 px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition">
           Start Coding Now
@@ -72,9 +102,13 @@ const Home = () => {
           Featured Problems
         </h2>
         <div className="grid md:grid-cols-3 gap-6 px-10">
-          {featuredProblems.map((problem, index) => (
-            <ProblemCard key={index} problem={problem} />
-          ))}
+          {featuredProblems
+            ? featuredProblems.map((problem, index) => (
+                <ProblemCard key={index} problem={problem} />
+              ))
+            : featuredProblem.map((problem, index) => (
+                <ProblemCard key={index} problem={problem} />
+              ))}
         </div>
       </section>
 
@@ -168,7 +202,7 @@ ProblemCard.propTypes = {
 };
 
 // ✅ Sample Data
-const featuredProblems = [
+const featuredProblem = [
   {
     title: "Find Two Numbers for Sum", // 28 characters
     difficulty: "Easy",
