@@ -1,7 +1,26 @@
 import PropTypes from "prop-types";
 import { CheckCircle, Code, TrendingUp, UserCheck } from "lucide-react";
+import { fetchAndActivate, getValue } from "firebase/remote-config";
+import { remoteConfig } from "../firebase";
 
 const Home = () => {
+  async function fetchConfig() {
+    try {
+      console.log("Fetching remote config...");
+      const isFetched = await fetchAndActivate(remoteConfig);
+      console.log("Is Config Fetched?:", isFetched);
+
+      const welcomeMessage = getValue(
+        remoteConfig,
+        "herosectionqoute"
+      ).asString();
+      console.log("HeroSectionQoute:", welcomeMessage);
+    } catch (error) {
+      console.error("Error fetching or activating remote config:", error);
+    }
+  }
+  fetchConfig();
+
   return (
     <div className="bg-gray-900 text-white">
       {/* Hero Section */}

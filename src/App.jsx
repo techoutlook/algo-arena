@@ -5,9 +5,23 @@ import Blogs from "./routes/Blogs";
 import Contactus from "./routes/Contactus";
 import Codeplayground from "./routes/Codeplayground";
 import Footer from "./components/Footer";
-import ScrollToTop from "./components/ScrollToTop"; // Import the ScrollToTop component
+import ScrollToTop from "./components/ScrollToTop";
+import { useEffect } from "react";
+import { analytics } from "./firebase";
+import { logEvent, setUserProperties } from "firebase/analytics";
 
 function App() {
+  useEffect(() => {
+    logEvent(analytics, "user_visit", { timestamp: Date.now() });
+  }, []);
+
+  // Set user properties for segmentation
+  setUserProperties(analytics, {
+    user_type: "new", // Change to "returning" if needed
+    device_type: window.innerWidth < 768 ? "mobile" : "desktop",
+    country: "India", // You can fetch this dynamically using an API
+  });
+
   return (
     <>
       <div className="min-h-screen flex flex-col bg-gray-50">
