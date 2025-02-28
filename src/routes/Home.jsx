@@ -10,38 +10,33 @@ const Home = () => {
   const [featuredProblems, setFeaturedProblems] = useState(null);
 
   useEffect(() => {
-    const docRef = doc(db, "HomePage", "HeroSection");
+    const heroDocRef = doc(db, "HomePage", "HeroSection");
+    const problemsDocRef = doc(db, "HomePage", "Featured Problems");
 
-    // Single real-time listener
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+    // Single real-time listener for both documents
+    const unsubscribeHero = onSnapshot(heroDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setHeroQoute(data["HeroSectionQuotes"]?.[data["WhichQoute"]]);
-        setHeroMessage(data["HeroSectionMessage"]?.[data["WhichMessage"]]);
+        setHeroQoute(data?.HeroSectionQuotes?.[data?.WhichQoute]);
+        setHeroMessage(data?.HeroSectionMessage?.[data?.WhichMessage]);
       } else {
-        console.log("No such document!");
+        console.log("HeroSection document does not exist!");
       }
     });
 
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const docRef = doc(db, "HomePage", "Featured Problems");
-
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+    const unsubscribeProblems = onSnapshot(problemsDocRef, (docSnap) => {
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        setFeaturedProblems(data);
+        setFeaturedProblems(docSnap.data()?.FeaturedProblemsArray);
       } else {
-        console.log("No such document!");
+        console.log("Featured Problems document does not exist!");
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeHero();
+      unsubscribeProblems();
+    };
   }, []);
-
-  console.log(featuredProblems);
 
   const TypingDots = () => (
     <span className="inline-flex gap-1">
@@ -102,13 +97,11 @@ const Home = () => {
           Featured Problems
         </h2>
         <div className="grid md:grid-cols-3 gap-6 px-10">
-          {featuredProblems
-            ? featuredProblems.map((problem, index) => (
-                <ProblemCard key={index} problem={problem} />
-              ))
-            : featuredProblem.map((problem, index) => (
-                <ProblemCard key={index} problem={problem} />
-              ))}
+          {featuredProblems &&
+            featuredProblems.length > 0 &&
+            featuredProblems.map((problem, index) => (
+              <ProblemCard key={index} problem={problem} />
+            ))}
         </div>
       </section>
 
@@ -200,25 +193,6 @@ ProblemCard.propTypes = {
     description: PropTypes.string.isRequired,
   }).isRequired,
 };
-
-// ✅ Sample Data
-const featuredProblem = [
-  {
-    title: "Find Two Numbers for Sum", // 28 characters
-    difficulty: "Easy",
-    description: "Find two numbers that add up to a target value.",
-  },
-  {
-    title: "Find Longest Unique Substring", // 28 characters
-    difficulty: "Medium",
-    description: "Find the longest substring without repeating characters.",
-  },
-  {
-    title: "Merge Multiple Sorted Lists", // 28 characters
-    difficulty: "Hard",
-    description: "Merge multiple sorted linked lists into one sorted list.",
-  },
-];
 
 const whyAlgoArena = [
   {
