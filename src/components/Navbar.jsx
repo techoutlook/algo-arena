@@ -1,12 +1,23 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
-import { Menu, X, LogIn } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, X, LogIn, User } from "lucide-react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(null);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -17,20 +28,10 @@ function Navbar() {
     { to: "/codeplayground", label: "Code Playground" },
   ];
 
-  const auth = getAuth();
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      const uid = user.uid;
-      if (uid) {
-        setIsLoggedIn(true);
-      }
-    }
-  });
-
   return (
     <nav className="bg-gray-900 shadow-lg fixed top-0 left-0 w-full z-50 h-20 border-b border-gray-800">
       <div className="flex items-center justify-between py-4 px-8 relative">
-        {/* Logo (Always Visible) */}
+        {/* Logo */}
         <Link to="/" className="text-white font-bold text-2xl relative z-50">
           Algo<span className="text-green-500">Arena</span>
         </Link>
@@ -51,13 +52,16 @@ function Navbar() {
             </Link>
           ))}
 
-          {/* Auth Button/Profile - Desktop */}
-          {isLoggedIn && isLoggedIn ? (
+          {/* Auth/Profile Section - With Skeleton Loader */}
+          {loading ? (
+            <div className="w-26 h-10 bg-gray-700 animate-pulse rounded-xl"></div>
+          ) : isLoggedIn ? (
             <Link
               to="/profile"
-              className="ml-4 px-3 py-2 rounded-md text-sm font-medium bg-blue-100 text-blue-700 flex items-center"
+              className="flex items-center gap-2 py-2 px-4 text-lg font-medium rounded-xl bg-white text-gray-900 hover:bg-gray-200 transition duration-300 shadow-sm border"
             >
-              Profile
+              <User size={20} />
+              <span>Profile</span>
             </Link>
           ) : (
             <Link
@@ -74,7 +78,7 @@ function Navbar() {
           )}
         </div>
 
-        {/* Mobile Menu Button (Only Shows When Menu is Closed) */}
+        {/* Mobile Menu Button */}
         {!isOpen && (
           <button
             className="md:hidden text-white relative z-50 focus:outline-none"
@@ -85,13 +89,13 @@ function Navbar() {
         )}
       </div>
 
-      {/* Mobile Menu (Slides from Right) */}
+      {/* Mobile Menu */}
       <div
         className={`fixed top-0 right-0 h-full w-64 bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         } md:hidden flex flex-col items-center py-10 space-y-6`}
       >
-        {/* Close Button inside Menu */}
+        {/* Close Button */}
         <button
           className="absolute top-4 right-4 text-white"
           onClick={toggleMenu}
@@ -114,19 +118,32 @@ function Navbar() {
           </Link>
         ))}
 
-        {/* Auth Button - Mobile */}
-        <Link
-          to="/auth"
-          className={`flex items-center gap-2 py-2 px-6 text-xl font-medium rounded-xl transition duration-300 ${
-            location.pathname === "/auth"
-              ? "text-green-400"
-              : "bg-green-600 text-white hover:bg-green-700"
-          }`}
-          onClick={() => setIsOpen(false)}
-        >
-          <LogIn size={22} />
-          <span>Login</span>
-        </Link>
+        {/* Mobile Auth/Profile Section - With Skeleton */}
+        {loading ? (
+          <div className="w-36 h-12 bg-gray-700 animate-pulse rounded-xl"></div>
+        ) : isLoggedIn ? (
+          <Link
+            to="/profile"
+            className="flex items-center gap-2 py-2 px-6 text-xl font-medium rounded-xl bg-white text-gray-900 hover:bg-gray-200 transition duration-300 shadow-sm border"
+            onClick={() => setIsOpen(false)}
+          >
+            <User size={22} />
+            <span>Profile</span>
+          </Link>
+        ) : (
+          <Link
+            to="/auth"
+            className={`flex items-center gap-2 py-2 px-6 text-xl font-medium rounded-xl transition duration-300 ${
+              location.pathname === "/auth"
+                ? "text-green-400"
+                : "bg-green-600 text-white hover:bg-green-700"
+            }`}
+            onClick={() => setIsOpen(false)}
+          >
+            <LogIn size={22} />
+            <span>Login</span>
+          </Link>
+        )}
       </div>
     </nav>
   );

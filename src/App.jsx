@@ -10,6 +10,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { useEffect } from "react";
 import { analytics } from "./firebase";
 import { logEvent, setUserProperties } from "firebase/analytics";
+import Profile from "./routes/Profile";
 
 function App() {
   const location = useLocation();
@@ -37,6 +38,7 @@ function App() {
             <Route path="/contactus" element={<Contactus />} />
             <Route path="/codeplayground" element={<Codeplayground />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         </div>
         {location.pathname !== "/codeplayground" &&

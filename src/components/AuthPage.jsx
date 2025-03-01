@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Eye, EyeOff, User, Lock, Mail, ArrowRight, Info } from "lucide-react";
 import {
   getAuth,
@@ -8,12 +8,15 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  onAuthStateChanged,
 } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 // Get the auth instance using the existing Firebase app
 const auth = getAuth();
 
 const AuthPage = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -26,6 +29,22 @@ const AuthPage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userUid, setUserUid] = useState(null);
+  console.log(userUid);
+
+  const stableNavigate = useCallback(() => {
+    navigate("/profile");
+  }, [navigate]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        stableNavigate();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [stableNavigate]);
 
   useEffect(() => {
     // Check if the URL contains a sign-in link when the component mounts
@@ -105,10 +124,8 @@ const AuthPage = () => {
         // Handle sign in with email/password
         signInWithEmailAndPassword(auth, formData.email, formData.password)
           .then((userCredential) => {
+            setUserUid(userCredential.user.uid); // Store UID in state
             setSuccess("Successfully signed in!");
-            console.log("User signed in:", userCredential.user);
-            // Redirect to dashboard or home page
-            // window.location.href = '/dashboard';
           })
           .catch((error) => {
             if (error.code === "auth/invalid-credential") {
@@ -124,16 +141,13 @@ const AuthPage = () => {
         // Handle sign up with email/password
         createUserWithEmailAndPassword(auth, formData.email, formData.password)
           .then((userCredential) => {
-            // Update profile with username
             return updateProfile(userCredential.user, {
               displayName: formData.username,
             }).then(() => userCredential);
           })
           .then((userCredential) => {
-            setSuccess("Account created successfully! You are now signed in.");
-            console.log("User created:", userCredential.user);
-            // Redirect to dashboard or home page
-            // window.location.href = '/dashboard';
+            setUserUid(userCredential.user.uid); // Store UID in state
+            setSuccess("Account created successfully!");
           })
           .catch((error) => {
             if (error.code === "auth/email-already-in-use") {
