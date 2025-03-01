@@ -179,7 +179,7 @@ const CodePlayground = () => {
   const isQuestionFullScreen = fullScreenPanel === "question";
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
       {/* Main content area (Editor + Output) */}
       {!isQuestionFullScreen && (
         <div
@@ -189,7 +189,7 @@ const CodePlayground = () => {
               : isEditorFullScreen || isOutputFullScreen
               ? "w-full"
               : "w-full md:w-2/3"
-          } h-full p-2 md:p-4 space-y-2 md:space-y-4 overflow-hidden`}
+          } h-full gap-2 md:gap-4 overflow-hidden`}
         >
           {/* Code Editor */}
           {!isOutputFullScreen && (
@@ -253,38 +253,40 @@ const CodePlayground = () => {
       {/* Question Panel */}
       {!isEditorFullScreen && !isOutputFullScreen && (
         <div
-          className={`bg-gray-800 ${
+          className={`bg-gray-800 rounded-lg ${
             isQuestionFullScreen ? "w-full h-full" : "w-full md:w-1/3 h-full"
-          } p-2 md:p-4 ${
-            !isQuestionFullScreen && "md:border-l border-gray-700"
           } overflow-auto`}
         >
-          <div className="sticky top-0 bg-gray-800 z-10">
-            <PanelHeader
-              icon={FileText}
-              title="Question"
-              panel="question"
-              onToggleFullScreen={toggleFullScreen}
-            />
-          </div>
-          <div className="p-2">
-            <h2 className="text-xl font-bold mb-4">Two Sum Problem</h2>
-            <div className="prose prose-invert">
-              <p className="mb-3">
-                Given an array of integers <code>nums</code> and an integer{" "}
-                <code>target</code>, return indices of the two numbers such that
-                they add up to <code>target</code>.
-              </p>
-              <p className="mb-3">
-                You may assume that each input would have exactly one solution,
-                and you may not use the same element twice.
-              </p>
-              <h3 className="text-lg font-semibold mt-4 mb-2">Example:</h3>
-              <pre className="bg-gray-900 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
-                {`Input: nums = [2,7,11,15], target = 9
+          <div className="p-2 md:p-3 flex flex-col h-full">
+            <div className="sticky top-0 bg-gray-800 z-10">
+              <PanelHeader
+                icon={FileText}
+                title="Question"
+                panel="question"
+                onToggleFullScreen={toggleFullScreen}
+              />
+            </div>
+            <div className="flex-grow overflow-auto">
+              <div className="p-2">
+                <h2 className="text-xl font-bold mb-4">Two Sum Problem</h2>
+                <div className="prose prose-invert">
+                  <p className="mb-3">
+                    Given an array of integers <code>nums</code> and an integer{" "}
+                    <code>target</code>, return indices of the two numbers such
+                    that they add up to <code>target</code>.
+                  </p>
+                  <p className="mb-3">
+                    You may assume that each input would have exactly one
+                    solution, and you may not use the same element twice.
+                  </p>
+                  <h3 className="text-lg font-semibold mt-4 mb-2">Example:</h3>
+                  <pre className="bg-gray-900 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
+                    {`Input: nums = [2,7,11,15], target = 9
 Output: [0,1]
 Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].`}
-              </pre>
+                  </pre>
+                </div>
+              </div>
             </div>
           </div>
         </div>
