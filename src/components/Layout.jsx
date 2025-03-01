@@ -7,8 +7,7 @@ function Layout() {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-grow pt-16">
-        {/* Ensures content takes available space */}
-        <Outlet /> {/* Renders the current page content */}
+        <Outlet />
       </main>
       <Footer />
     </div>

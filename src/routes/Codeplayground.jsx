@@ -10,6 +10,7 @@ const PanelHeader = ({
   panel,
   onToggleFullScreen,
   runAction,
+  languageSelector,
 }) => (
   <div className="flex justify-between items-center pb-2 border-b border-gray-700 mb-2">
     <div className="flex items-center gap-2">
@@ -17,6 +18,7 @@ const PanelHeader = ({
       <span className="font-medium">{title}</span>
     </div>
     <div className="flex items-center gap-2">
+      {languageSelector}
       {runAction && (
         <button
           onClick={runAction}
@@ -47,13 +49,25 @@ PanelHeader.propTypes = {
   panel: PropTypes.string.isRequired,
   onToggleFullScreen: PropTypes.func.isRequired,
   runAction: PropTypes.func,
+  languageSelector: PropTypes.node,
 };
 
 const CodePlayground = () => {
   const [code, setCode] = useState("// Start coding...");
   const [output, setOutput] = useState("Output will appear here...");
   const [fullScreenPanel, setFullScreenPanel] = useState(null);
+  const [language, setLanguage] = useState("javascript");
   const editorRef = useRef(null);
+
+  // List of supported languages
+  const supportedLanguages = [
+    { value: "javascript", label: "JavaScript" },
+    { value: "typescript", label: "TypeScript" },
+    { value: "python", label: "Python" },
+    { value: "java", label: "Java" },
+    { value: "csharp", label: "C#" },
+    { value: "cpp", label: "C++" },
+  ];
 
   // Handle editor mounting
   const handleEditorDidMount = (editor) => {
@@ -81,13 +95,72 @@ const CodePlayground = () => {
     };
   }, [fullScreenPanel]);
 
+  // Language change handler
+  const handleLanguageChange = (e) => {
+    const newLanguage = e.target.value;
+    setLanguage(newLanguage);
+
+    // Update default code template based on language
+    switch (newLanguage) {
+      case "python":
+        setCode("# Start coding in Python...");
+        break;
+      case "java":
+        setCode(
+          "public class Main {\n  public static void main(String[] args) {\n    // Start coding in Java...\n  }\n}"
+        );
+        break;
+      case "typescript":
+        setCode(
+          "// Start coding in TypeScript...\nfunction example(): void {\n  \n}"
+        );
+        break;
+      case "csharp":
+        setCode(
+          "using System;\n\nclass Program {\n  static void Main() {\n    // Start coding in C#...\n  }\n}"
+        );
+        break;
+      case "cpp":
+        setCode(
+          "#include <iostream>\n\nint main() {\n  // Start coding in C++...\n  return 0;\n}"
+        );
+        break;
+      default:
+        setCode("// Start coding in JavaScript...");
+        break;
+    }
+  };
+
+  // Language selector component
+  const LanguageSelector = () => (
+    <select
+      value={language}
+      onChange={handleLanguageChange}
+      className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm"
+      aria-label="Select programming language"
+    >
+      {supportedLanguages.map((lang) => (
+        <option key={lang.value} value={lang.value}>
+          {lang.label}
+        </option>
+      ))}
+    </select>
+  );
+
   const runCode = () => {
     try {
-      // For demonstration purposes - in real app you'd send to backend
-      const result = new Function(code)();
-      setOutput(
-        result !== undefined ? String(result) : "Code executed successfully"
-      );
+      // For demonstration purposes - in real app you'd handle different languages
+      if (language === "javascript") {
+        const result = new Function(code)();
+        setOutput(
+          result !== undefined ? String(result) : "Code executed successfully"
+        );
+      } else {
+        // For other languages, you would send to backend
+        setOutput(
+          `[${language.toUpperCase()}] Code execution simulated. In a real app, this would be sent to a backend service.`
+        );
+      }
     } catch (error) {
       setOutput(`Error: ${error.message}`);
     }
@@ -132,11 +205,12 @@ const CodePlayground = () => {
                   panel="editor"
                   onToggleFullScreen={toggleFullScreen}
                   runAction={runCode}
+                  languageSelector={<LanguageSelector />}
                 />
                 <div className="flex-grow overflow-hidden">
                   <Editor
                     height="100%"
-                    language="javascript"
+                    language={language}
                     value={code}
                     onChange={setCode}
                     theme="vs-dark"
