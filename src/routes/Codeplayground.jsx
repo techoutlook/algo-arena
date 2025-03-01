@@ -1,48 +1,72 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import Editor from "@monaco-editor/react";
 import { Maximize, Minimize, Code, FileText, Terminal } from "lucide-react";
 import PropTypes from "prop-types";
 
-// Panel header component with prop validation
-const PanelHeader = ({
-  icon: Icon,
-  title,
-  panel,
-  onToggleFullScreen,
-  runAction,
-  languageSelector,
-}) => (
-  <div className="flex justify-between items-center pb-2 border-b border-gray-700 mb-2">
-    <div className="flex items-center gap-2">
-      <Icon size={18} />
-      <span className="font-medium">{title}</span>
-    </div>
-    <div className="flex items-center gap-2">
-      {languageSelector}
-      {runAction && (
-        <button
-          onClick={runAction}
-          className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded font-medium transition-colors"
-        >
-          Run
-        </button>
-      )}
-      <button
-        onClick={() => onToggleFullScreen(panel)}
-        className="p-1 hover:bg-gray-700 rounded transition-colors"
-        aria-label={`Toggle ${panel} fullscreen`}
-      >
-        {panel === onToggleFullScreen.activePanel ? (
-          <Minimize size={18} />
-        ) : (
-          <Maximize size={18} />
-        )}
-      </button>
-    </div>
-  </div>
+// Language configuration
+const SUPPORTED_LANGUAGES = [
+  { value: "javascript", label: "JavaScript" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "python", label: "Python" },
+  { value: "java", label: "Java" },
+  { value: "csharp", label: "C#" },
+  { value: "cpp", label: "C++" },
+];
+
+const LANGUAGE_TEMPLATES = {
+  javascript: "// Start coding in JavaScript...",
+  typescript:
+    "// Start coding in TypeScript...\nfunction example(): void {\n  \n}",
+  python: "# Start coding in Python...",
+  java: "public class Main {\n  public static void main(String[] args) {\n    // Start coding in Java...\n  }\n}",
+  csharp:
+    "using System;\n\nclass Program {\n  static void Main() {\n    // Start coding in C#...\n  }\n}",
+  cpp: "#include <iostream>\n\nint main() {\n  // Start coding in C++...\n  return 0;\n}",
+};
+
+// Memoized Panel header component with prop validation
+const PanelHeader = memo(
+  ({
+    icon: Icon,
+    title,
+    panel,
+    onToggleFullScreen,
+    runAction,
+    languageSelector,
+  }) => {
+    const isActive = onToggleFullScreen.activePanel === panel;
+
+    return (
+      <div className="flex justify-between items-center pb-2 border-b border-gray-700 mb-2">
+        <div className="flex items-center gap-2">
+          <Icon size={18} />
+          <span className="font-medium">{title}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {languageSelector}
+          {runAction && (
+            <button
+              onClick={runAction}
+              className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded font-medium transition-colors"
+            >
+              Run
+            </button>
+          )}
+          <button
+            onClick={() => onToggleFullScreen(panel)}
+            className="p-1 hover:bg-gray-700 rounded transition-colors"
+            aria-label={`Toggle ${panel} fullscreen`}
+          >
+            {isActive ? <Minimize size={18} /> : <Maximize size={18} />}
+          </button>
+        </div>
+      </div>
+    );
+  }
 );
 
-// Add prop type validation
+PanelHeader.displayName = "PanelHeader";
+
 PanelHeader.propTypes = {
   icon: PropTypes.elementType.isRequired,
   title: PropTypes.string.isRequired,
@@ -52,22 +76,61 @@ PanelHeader.propTypes = {
   languageSelector: PropTypes.node,
 };
 
+// Memoized language selector
+const LanguageSelector = memo(({ language, onChange }) => (
+  <select
+    value={language}
+    onChange={onChange}
+    className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm"
+    aria-label="Select programming language"
+  >
+    {SUPPORTED_LANGUAGES.map((lang) => (
+      <option key={lang.value} value={lang.value}>
+        {lang.label}
+      </option>
+    ))}
+  </select>
+));
+
+LanguageSelector.displayName = "LanguageSelector";
+
+LanguageSelector.propTypes = {
+  language: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
+// Question panel content
+const QuestionContent = memo(() => (
+  <div className="p-2">
+    <h2 className="text-xl font-bold mb-4">Two Sum Problem</h2>
+    <div className="prose prose-invert">
+      <p className="mb-3">
+        Given an array of integers <code>nums</code> and an integer{" "}
+        <code>target</code>, return indices of the two numbers such that they
+        add up to <code>target</code>.
+      </p>
+      <p className="mb-3">
+        You may assume that each input would have exactly one solution, and you
+        may not use the same element twice.
+      </p>
+      <h3 className="text-lg font-semibold mt-4 mb-2">Example:</h3>
+      <pre className="bg-gray-900 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
+        {`Input: nums = [2,7,11,15], target = 9
+Output: [0,1]
+Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].`}
+      </pre>
+    </div>
+  </div>
+));
+
+QuestionContent.displayName = "QuestionContent";
+
 const CodePlayground = () => {
-  const [code, setCode] = useState("// Start coding...");
+  const [code, setCode] = useState(LANGUAGE_TEMPLATES.javascript);
   const [output, setOutput] = useState("Output will appear here...");
   const [fullScreenPanel, setFullScreenPanel] = useState(null);
   const [language, setLanguage] = useState("javascript");
   const editorRef = useRef(null);
-
-  // List of supported languages
-  const supportedLanguages = [
-    { value: "javascript", label: "JavaScript" },
-    { value: "typescript", label: "TypeScript" },
-    { value: "python", label: "Python" },
-    { value: "java", label: "Java" },
-    { value: "csharp", label: "C#" },
-    { value: "cpp", label: "C++" },
-  ];
 
   // Handle editor mounting
   const handleEditorDidMount = (editor) => {
@@ -99,53 +162,8 @@ const CodePlayground = () => {
   const handleLanguageChange = (e) => {
     const newLanguage = e.target.value;
     setLanguage(newLanguage);
-
-    // Update default code template based on language
-    switch (newLanguage) {
-      case "python":
-        setCode("# Start coding in Python...");
-        break;
-      case "java":
-        setCode(
-          "public class Main {\n  public static void main(String[] args) {\n    // Start coding in Java...\n  }\n}"
-        );
-        break;
-      case "typescript":
-        setCode(
-          "// Start coding in TypeScript...\nfunction example(): void {\n  \n}"
-        );
-        break;
-      case "csharp":
-        setCode(
-          "using System;\n\nclass Program {\n  static void Main() {\n    // Start coding in C#...\n  }\n}"
-        );
-        break;
-      case "cpp":
-        setCode(
-          "#include <iostream>\n\nint main() {\n  // Start coding in C++...\n  return 0;\n}"
-        );
-        break;
-      default:
-        setCode("// Start coding in JavaScript...");
-        break;
-    }
+    setCode(LANGUAGE_TEMPLATES[newLanguage] || LANGUAGE_TEMPLATES.javascript);
   };
-
-  // Language selector component
-  const LanguageSelector = () => (
-    <select
-      value={language}
-      onChange={handleLanguageChange}
-      className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm"
-      aria-label="Select programming language"
-    >
-      {supportedLanguages.map((lang) => (
-        <option key={lang.value} value={lang.value}>
-          {lang.label}
-        </option>
-      ))}
-    </select>
-  );
 
   const runCode = () => {
     try {
@@ -178,6 +196,11 @@ const CodePlayground = () => {
   const isOutputFullScreen = fullScreenPanel === "output";
   const isQuestionFullScreen = fullScreenPanel === "question";
 
+  // Prepare memoized language selector
+  const languageSelectorElement = (
+    <LanguageSelector language={language} onChange={handleLanguageChange} />
+  );
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
       {/* Main content area (Editor + Output) */}
@@ -205,7 +228,7 @@ const CodePlayground = () => {
                   panel="editor"
                   onToggleFullScreen={toggleFullScreen}
                   runAction={runCode}
-                  languageSelector={<LanguageSelector />}
+                  languageSelector={languageSelectorElement}
                 />
                 <div className="flex-grow overflow-hidden">
                   <Editor
@@ -267,26 +290,7 @@ const CodePlayground = () => {
               />
             </div>
             <div className="flex-grow overflow-auto">
-              <div className="p-2">
-                <h2 className="text-xl font-bold mb-4">Two Sum Problem</h2>
-                <div className="prose prose-invert">
-                  <p className="mb-3">
-                    Given an array of integers <code>nums</code> and an integer{" "}
-                    <code>target</code>, return indices of the two numbers such
-                    that they add up to <code>target</code>.
-                  </p>
-                  <p className="mb-3">
-                    You may assume that each input would have exactly one
-                    solution, and you may not use the same element twice.
-                  </p>
-                  <h3 className="text-lg font-semibold mt-4 mb-2">Example:</h3>
-                  <pre className="bg-gray-900 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
-                    {`Input: nums = [2,7,11,15], target = 9
-Output: [0,1]
-Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].`}
-                  </pre>
-                </div>
-              </div>
+              <QuestionContent />
             </div>
           </div>
         </div>
