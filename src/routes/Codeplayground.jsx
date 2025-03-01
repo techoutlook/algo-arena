@@ -206,7 +206,7 @@ const CodePlayground = () => {
                 and you may not use the same element twice.
               </p>
               <h3 className="text-lg font-semibold mt-4 mb-2">Example:</h3>
-              <pre className="bg-gray-900 p-3 rounded-lg">
+              <pre className="bg-gray-900 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
                 {`Input: nums = [2,7,11,15], target = 9
 Output: [0,1]
 Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].`}
