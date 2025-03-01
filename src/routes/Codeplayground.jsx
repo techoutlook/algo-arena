@@ -1,62 +1,69 @@
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { FullScreen, useFullScreenHandle } from "react-full-screen";
 
 const CodePlayground = () => {
-  const [code, setCode] = useState("// Write your code here...");
-  const [language, setLanguage] = useState("javascript");
+  const [code, setCode] = useState("// Start coding...");
   const [output, setOutput] = useState("");
+  const [activeTab, setActiveTab] = useState("editor");
 
-  const handleRun = async () => {
-    try {
-      // Mock execution (Replace with API or Firebase function call)
-      setOutput(
-        `Executed in ${language}:
-` + code
-      );
-    } catch (error) {
-      setOutput("Error executing code");
-    }
-  };
+  const questionFullScreen = useFullScreenHandle();
+  const editorFullScreen = useFullScreenHandle();
+  const outputFullScreen = useFullScreenHandle();
 
-  const handleSave = async () => {
-    try {
-      const docRef = await addDoc(collection(db, "codeSnippets"), {
-        code,
-        language,
-        createdAt: new Date(),
-      });
-      alert("Snippet saved! ID: " + docRef.id);
-    } catch (error) {
-      alert("Error saving snippet");
-    }
+  const runCode = async () => {
+    // Call backend API to execute code and return output
+    setOutput("Running code... (backend needed)");
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Code Playground</h1>
-      <select
-        value={language}
-        onChange={(e) => setLanguage(e.target.value)}
-        className="mb-2 p-2 border"
-      >
-        <option value="javascript">JavaScript</option>
-        <option value="python">Python</option>
-      </select>
-      <Editor
-        height="300px"
-        language={language}
-        value={code}
-        onChange={(value) => setCode(value || "")}
-      />
-      <button onClick={handleRun} className="mt-2 p-2 bg-blue-500 text-white">
-        Run Code
-      </button>
-      <button onClick={handleSave} className="ml-2 p-2 bg-green-500 text-white">
-        Save Snippet
-      </button>
-      <pre className="mt-4 p-2 bg-gray-200">{output}</pre>
+    <div className="flex flex-col h-screen bg-gray-900 text-white">
+      {/* Header with Tabs */}
+      <div className="flex justify-around bg-gray-800 p-2">
+        <button onClick={() => setActiveTab("question")}>Question</button>
+        <button onClick={() => setActiveTab("editor")}>Editor</button>
+        <button onClick={() => setActiveTab("output")}>Output</button>
+      </div>
+
+      {/* Question Tab */}
+      {activeTab === "question" && (
+        <FullScreen handle={questionFullScreen}>
+          <div className="p-4">
+            <button onClick={questionFullScreen.enter}>Full Screen</button>
+            <h2 className="text-xl font-bold">Two Sum Problem</h2>
+            <p>Find two numbers that add up to the target...</p>
+          </div>
+        </FullScreen>
+      )}
+
+      {/* Code Editor */}
+      {activeTab === "editor" && (
+        <FullScreen handle={editorFullScreen}>
+          <div className="p-4">
+            <button onClick={editorFullScreen.enter}>Full Screen</button>
+            <Editor
+              height="400px"
+              language="javascript"
+              value={code}
+              onChange={(value) => setCode(value)}
+            />
+            <button onClick={runCode} className="mt-2 bg-green-600 p-2">
+              Run
+            </button>
+          </div>
+        </FullScreen>
+      )}
+
+      {/* Output Tab */}
+      {activeTab === "output" && (
+        <FullScreen handle={outputFullScreen}>
+          <div className="p-4">
+            <button onClick={outputFullScreen.enter}>Full Screen</button>
+            <h3 className="text-lg font-bold">Output:</h3>
+            <pre>{output}</pre>
+          </div>
+        </FullScreen>
+      )}
     </div>
   );
 };
