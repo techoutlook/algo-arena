@@ -5,6 +5,7 @@ import Blogs from "./routes/Blogs";
 import Contactus from "./routes/Contactus";
 import Codeplayground from "./routes/Codeplayground";
 import Footer from "./components/Footer";
+import AuthPage from "./components/AuthPage";
 import ScrollToTop from "./components/ScrollToTop";
 import { useEffect } from "react";
 import { analytics } from "./firebase";
@@ -35,9 +36,11 @@ function App() {
             <Route path="/blogs" element={<Blogs />} />
             <Route path="/contactus" element={<Contactus />} />
             <Route path="/codeplayground" element={<Codeplayground />} />
+            <Route path="/auth" element={<AuthPage />} />
           </Routes>
         </div>
-        {location.pathname !== "/codeplayground" && <Footer />}
+        {location.pathname !== "/codeplayground" &&
+          location.pathname !== "/auth" && <Footer />}
       </div>
     </>
   );

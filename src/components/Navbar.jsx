@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +24,7 @@ function Navbar() {
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex gap-6">
+        <div className="hidden md:flex items-center gap-6">
           {navLinks.map(({ to, label }) => (
             <Link
               key={to}
@@ -38,6 +38,19 @@ function Navbar() {
               {label}
             </Link>
           ))}
+
+          {/* Auth Button - Desktop */}
+          <Link
+            to="/auth"
+            className={`flex items-center gap-2 py-2 px-4 text-lg font-medium rounded-xl transition duration-300 ml-2 ${
+              location.pathname === "/auth"
+                ? "text-green-400 bg-gray-800"
+                : "bg-green-600 text-white hover:bg-green-700"
+            }`}
+          >
+            <LogIn size={20} />
+            <span>Login</span>
+          </Link>
         </div>
 
         {/* Mobile Menu Button (Only Shows When Menu is Closed) */}
@@ -79,6 +92,20 @@ function Navbar() {
             {label}
           </Link>
         ))}
+
+        {/* Auth Button - Mobile */}
+        <Link
+          to="/auth"
+          className={`flex items-center gap-2 py-2 px-6 text-xl font-medium rounded-xl transition duration-300 ${
+            location.pathname === "/auth"
+              ? "text-green-400"
+              : "bg-green-600 text-white hover:bg-green-700"
+          }`}
+          onClick={() => setIsOpen(false)}
+        >
+          <LogIn size={22} />
+          <span>Login</span>
+        </Link>
       </div>
     </nav>
   );
