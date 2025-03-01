@@ -131,6 +131,17 @@ const CodePlayground = () => {
   const [fullScreenPanel, setFullScreenPanel] = useState(null);
   const [language, setLanguage] = useState("javascript");
   const editorRef = useRef(null);
+  const [pyodide, setPyodide] = useState(null);
+
+  // Load Pyodide when the component mounts
+  useEffect(() => {
+    const loadPyodideAndPackages = async () => {
+      const py = await window.loadPyodide();
+      setPyodide(py);
+    };
+
+    loadPyodideAndPackages();
+  }, []);
 
   // Handle editor mounting
   const handleEditorDidMount = (editor) => {
@@ -165,19 +176,41 @@ const CodePlayground = () => {
     setCode(LANGUAGE_TEMPLATES[newLanguage] || LANGUAGE_TEMPLATES.javascript);
   };
 
-  const runCode = () => {
+  const runCode = async () => {
     try {
-      // For demonstration purposes - in real app you'd handle different languages
       if (language === "javascript") {
-        const result = new Function(code)();
-        setOutput(
-          result !== undefined ? String(result) : "Code executed successfully"
-        );
+        let logs = [];
+        const originalConsoleLog = console.log;
+
+        console.log = (...args) => {
+          logs.push(args.join(" "));
+          originalConsoleLog(...args);
+        };
+
+        try {
+          const result = new Function(code)();
+          if (result !== undefined) logs.push(String(result));
+        } catch (error) {
+          logs.push(`Error: ${error.message}`);
+        }
+
+        console.log = originalConsoleLog;
+        setOutput(logs.join("\n"));
+      } else if (language === "python") {
+        if (!pyodide) {
+          setOutput("Loading Python environment...");
+          return;
+        }
+        pyodide.runPython(`
+  import sys
+  from io import StringIO
+  sys.stdout = StringIO()
+  `);
+        await pyodide.runPythonAsync(code);
+        const output = pyodide.runPython("sys.stdout.getvalue()");
+        setOutput(output);
       } else {
-        // For other languages, you would send to backend
-        setOutput(
-          `[${language.toUpperCase()}] Code execution simulated. In a real app, this would be sent to a backend service.`
-        );
+        setOutput(`[${language.toUpperCase()}] Execution not supported yet.`);
       }
     } catch (error) {
       setOutput(`Error: ${error.message}`);
