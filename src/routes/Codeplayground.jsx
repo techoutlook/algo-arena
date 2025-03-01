@@ -4,12 +4,26 @@ import { Maximize, Minimize, Code, FileText, Terminal } from "lucide-react";
 import PropTypes from "prop-types";
 
 // Panel header component with prop validation
-const PanelHeader = ({ icon: Icon, title, panel, onToggleFullScreen }) => (
+const PanelHeader = ({
+  icon: Icon,
+  title,
+  panel,
+  onToggleFullScreen,
+  showRunButton,
+}) => (
   <div className="flex justify-between items-center pb-2 border-b border-gray-700 mb-2">
     <div className="flex items-center gap-2">
       <Icon size={18} />
       <span className="font-medium">{title}</span>
     </div>
+    {showRunButton && (
+      <button
+        onClick={showRunButton}
+        className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded font-medium transition-colors"
+      >
+        Run
+      </button>
+    )}
     <button
       onClick={() => onToggleFullScreen(panel)}
       className="p-1 hover:bg-gray-700 rounded transition-colors"
@@ -30,6 +44,7 @@ PanelHeader.propTypes = {
   title: PropTypes.string.isRequired,
   panel: PropTypes.string.isRequired,
   onToggleFullScreen: PropTypes.func.isRequired,
+  showRunButton: PropTypes.func,
 };
 
 const CodePlayground = () => {
@@ -84,6 +99,7 @@ const CodePlayground = () => {
                   title="Editor"
                   panel="editor"
                   onToggleFullScreen={toggleFullScreen}
+                  showRunButton={runCode}
                 />
                 <div className="h-full">
                   <Editor
@@ -103,12 +119,6 @@ const CodePlayground = () => {
                     }}
                   />
                 </div>
-                <button
-                  onClick={runCode}
-                  className="mt-4 w-full bg-green-600 hover:bg-green-700 p-2 rounded font-medium transition-colors"
-                >
-                  Run Code
-                </button>
               </div>
             </div>
           )}
