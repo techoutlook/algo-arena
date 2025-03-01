@@ -1,9 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Menu, X, LogIn } from "lucide-react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
   const location = useLocation();
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -14,6 +16,16 @@ function Navbar() {
     { to: "/contactus", label: "Contact Us" },
     { to: "/codeplayground", label: "Code Playground" },
   ];
+
+  const auth = getAuth();
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const uid = user.uid;
+      if (uid) {
+        setIsLoggedIn(true);
+      }
+    }
+  });
 
   return (
     <nav className="bg-gray-900 shadow-lg fixed top-0 left-0 w-full z-50 h-20 border-b border-gray-800">
@@ -39,18 +51,27 @@ function Navbar() {
             </Link>
           ))}
 
-          {/* Auth Button - Desktop */}
-          <Link
-            to="/auth"
-            className={`flex items-center gap-2 py-2 px-4 text-lg font-medium rounded-xl transition duration-300 ml-2 ${
-              location.pathname === "/auth"
-                ? "text-green-400 bg-gray-800"
-                : "bg-green-600 text-white hover:bg-green-700"
-            }`}
-          >
-            <LogIn size={20} />
-            <span>Login</span>
-          </Link>
+          {/* Auth Button/Profile - Desktop */}
+          {isLoggedIn && isLoggedIn ? (
+            <Link
+              to="/profile"
+              className="ml-4 px-3 py-2 rounded-md text-sm font-medium bg-blue-100 text-blue-700 flex items-center"
+            >
+              Profile
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className={`flex items-center gap-2 py-2 px-4 text-lg font-medium rounded-xl transition duration-300 ml-2 ${
+                location.pathname === "/auth"
+                  ? "text-green-400 bg-gray-800"
+                  : "bg-green-600 text-white hover:bg-green-700"
+              }`}
+            >
+              <LogIn size={20} />
+              <span>Login</span>
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Button (Only Shows When Menu is Closed) */}
