@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
 import { Maximize, Minimize, Code, FileText, Terminal } from "lucide-react";
 import PropTypes from "prop-types";
@@ -9,32 +9,34 @@ const PanelHeader = ({
   title,
   panel,
   onToggleFullScreen,
-  showRunButton,
+  runAction,
 }) => (
   <div className="flex justify-between items-center pb-2 border-b border-gray-700 mb-2">
     <div className="flex items-center gap-2">
       <Icon size={18} />
       <span className="font-medium">{title}</span>
     </div>
-    {showRunButton && (
-      <button
-        onClick={showRunButton}
-        className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded font-medium transition-colors"
-      >
-        Run
-      </button>
-    )}
-    <button
-      onClick={() => onToggleFullScreen(panel)}
-      className="p-1 hover:bg-gray-700 rounded transition-colors"
-      aria-label={`Toggle ${panel} fullscreen`}
-    >
-      {panel === onToggleFullScreen.activePanel ? (
-        <Minimize size={18} />
-      ) : (
-        <Maximize size={18} />
+    <div className="flex items-center gap-2">
+      {runAction && (
+        <button
+          onClick={runAction}
+          className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded font-medium transition-colors"
+        >
+          Run
+        </button>
       )}
-    </button>
+      <button
+        onClick={() => onToggleFullScreen(panel)}
+        className="p-1 hover:bg-gray-700 rounded transition-colors"
+        aria-label={`Toggle ${panel} fullscreen`}
+      >
+        {panel === onToggleFullScreen.activePanel ? (
+          <Minimize size={18} />
+        ) : (
+          <Maximize size={18} />
+        )}
+      </button>
+    </div>
   </div>
 );
 
@@ -44,13 +46,40 @@ PanelHeader.propTypes = {
   title: PropTypes.string.isRequired,
   panel: PropTypes.string.isRequired,
   onToggleFullScreen: PropTypes.func.isRequired,
-  showRunButton: PropTypes.func,
+  runAction: PropTypes.func,
 };
 
 const CodePlayground = () => {
   const [code, setCode] = useState("// Start coding...");
   const [output, setOutput] = useState("Output will appear here...");
   const [fullScreenPanel, setFullScreenPanel] = useState(null);
+  const editorRef = useRef(null);
+
+  // Handle editor mounting
+  const handleEditorDidMount = (editor) => {
+    editorRef.current = editor;
+  };
+
+  // Adjust editor layout when container size changes
+  useEffect(() => {
+    const resizeEditor = () => {
+      if (editorRef.current) {
+        editorRef.current.layout();
+      }
+    };
+
+    // Resize immediately and on window resize
+    resizeEditor();
+    window.addEventListener("resize", resizeEditor);
+
+    // Resize after fullscreen toggle with a small delay
+    const timeoutId = setTimeout(resizeEditor, 100);
+
+    return () => {
+      window.removeEventListener("resize", resizeEditor);
+      clearTimeout(timeoutId);
+    };
+  }, [fullScreenPanel]);
 
   const runCode = () => {
     try {
@@ -75,47 +104,48 @@ const CodePlayground = () => {
   const isEditorFullScreen = fullScreenPanel === "editor";
   const isOutputFullScreen = fullScreenPanel === "output";
   const isQuestionFullScreen = fullScreenPanel === "question";
-  const isAnyFullScreen = Boolean(fullScreenPanel);
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white overflow-hidden">
       {/* Main content area (Editor + Output) */}
       {!isQuestionFullScreen && (
         <div
           className={`flex flex-col ${
-            isAnyFullScreen ? "w-full" : "w-2/3"
-          } p-4 space-y-4`}
+            isQuestionFullScreen
+              ? "hidden"
+              : isEditorFullScreen || isOutputFullScreen
+              ? "w-full"
+              : "w-full md:w-2/3"
+          } h-full p-2 md:p-4 space-y-2 md:space-y-4 overflow-hidden`}
         >
           {/* Code Editor */}
           {!isOutputFullScreen && (
             <div
               className={`bg-gray-800 rounded-lg overflow-hidden ${
-                isEditorFullScreen ? "h-full" : "h-3/5"
-              }`}
+                isEditorFullScreen ? "h-full" : "h-1/2 md:h-3/5"
+              } flex flex-col`}
             >
-              <div className="p-3">
+              <div className="p-2 md:p-3 flex flex-col h-full">
                 <PanelHeader
                   icon={Code}
                   title="Editor"
                   panel="editor"
                   onToggleFullScreen={toggleFullScreen}
-                  showRunButton={runCode}
+                  runAction={runCode}
                 />
-                <div className="h-full">
+                <div className="flex-grow overflow-hidden">
                   <Editor
-                    height={
-                      isEditorFullScreen
-                        ? "calc(100vh - 120px)"
-                        : "calc(100% - 20px)"
-                    }
+                    height="100%"
                     language="javascript"
                     value={code}
                     onChange={setCode}
                     theme="vs-dark"
+                    onMount={handleEditorDidMount}
                     options={{
                       minimap: { enabled: false },
                       scrollBeyondLastLine: false,
                       fontSize: 14,
+                      automaticLayout: true,
                     }}
                   />
                 </div>
@@ -126,18 +156,18 @@ const CodePlayground = () => {
           {/* Output Panel */}
           {!isEditorFullScreen && (
             <div
-              className={`bg-gray-800 rounded-lg overflow-hidden ${
-                isOutputFullScreen ? "h-full" : "h-2/5"
-              }`}
+              className={`bg-gray-800 rounded-lg ${
+                isOutputFullScreen ? "h-full" : "h-1/2 md:h-2/5"
+              } flex flex-col overflow-hidden`}
             >
-              <div className="p-3">
+              <div className="p-2 md:p-3 flex flex-col h-full">
                 <PanelHeader
                   icon={Terminal}
                   title="Output"
                   panel="output"
                   onToggleFullScreen={toggleFullScreen}
                 />
-                <pre className="h-full overflow-auto bg-gray-900 p-3 rounded-lg text-sm">
+                <pre className="flex-grow overflow-auto bg-gray-900 p-2 md:p-3 rounded-lg text-sm">
                   {output}
                 </pre>
               </div>
@@ -150,15 +180,19 @@ const CodePlayground = () => {
       {!isEditorFullScreen && !isOutputFullScreen && (
         <div
           className={`bg-gray-800 ${
-            isQuestionFullScreen ? "w-full" : "w-1/3"
-          } p-4 ${!isQuestionFullScreen && "border-l border-gray-700"}`}
+            isQuestionFullScreen ? "w-full h-full" : "w-full md:w-1/3 h-full"
+          } p-2 md:p-4 ${
+            !isQuestionFullScreen && "md:border-l border-gray-700"
+          } overflow-auto`}
         >
-          <PanelHeader
-            icon={FileText}
-            title="Question"
-            panel="question"
-            onToggleFullScreen={toggleFullScreen}
-          />
+          <div className="sticky top-0 bg-gray-800 z-10">
+            <PanelHeader
+              icon={FileText}
+              title="Question"
+              panel="question"
+              onToggleFullScreen={toggleFullScreen}
+            />
+          </div>
           <div className="p-2">
             <h2 className="text-xl font-bold mb-4">Two Sum Problem</h2>
             <div className="prose prose-invert">
