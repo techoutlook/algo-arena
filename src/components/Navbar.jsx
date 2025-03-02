@@ -29,8 +29,8 @@ function Navbar() {
   ];
 
   return (
-    <nav className="bg-gray-900 shadow-lg fixed top-0 left-0 w-full z-50 h-20 border-b border-gray-800">
-      <div className="flex items-center justify-between py-4 px-4 lg:px-8 relative">
+    <nav className="bg-gray-900 shadow-lg fixed top-0 left-0 w-full z-50 border-b border-gray-800">
+      <div className="flex items-center justify-between py-3 sm:py-4 md:py-4 px-4 lg:px-8 relative">
         {/* Logo */}
         <Link
           to="/"
@@ -45,7 +45,7 @@ function Navbar() {
             <Link
               key={to}
               to={to}
-              className={`py-2 px-2 lg:px-4 text-sm lg:text-lg font-medium rounded-xl transition duration-300 ${
+              className={`py-1.5 sm:py-2 px-2 lg:px-4 text-sm lg:text-lg font-medium rounded-xl transition duration-300 ${
                 location.pathname === to
                   ? "text-green-400 bg-gray-800"
                   : "text-white hover:text-green-400"
@@ -57,11 +57,11 @@ function Navbar() {
 
           {/* Auth/Profile Section - With Skeleton Loader */}
           {loading ? (
-            <div className="w-20 lg:w-26 h-10 bg-gray-700 animate-pulse rounded-xl"></div>
+            <div className="w-20 lg:w-26 h-8 sm:h-9 md:h-10 bg-gray-700 animate-pulse rounded-xl"></div>
           ) : isLoggedIn ? (
             <Link
               to="/profile"
-              className="flex items-center gap-1 lg:gap-2 py-2 px-3 lg:px-4 text-sm lg:text-lg font-medium rounded-xl bg-white text-gray-900 hover:bg-gray-200 transition duration-300 shadow-sm border"
+              className="flex items-center gap-1 lg:gap-2 py-1.5 sm:py-2 px-3 lg:px-4 text-sm lg:text-lg font-medium rounded-xl bg-white text-gray-900 hover:bg-gray-200 transition duration-300 shadow-sm border"
             >
               <User size={18} className="hidden sm:block" />
               <span>Profile</span>
@@ -69,7 +69,7 @@ function Navbar() {
           ) : (
             <Link
               to="/auth"
-              className={`flex items-center gap-1 lg:gap-2 py-2 px-3 lg:px-4 text-sm lg:text-lg font-medium rounded-xl transition duration-300 ml-1 lg:ml-2 ${
+              className={`flex items-center gap-1 lg:gap-2 py-1.5 sm:py-2 px-3 lg:px-4 text-sm lg:text-lg font-medium rounded-xl transition duration-300 ml-1 lg:ml-2 ${
                 location.pathname === "/auth"
                   ? "text-green-400 bg-gray-800"
                   : "bg-green-600 text-white hover:bg-green-700"
@@ -87,7 +87,7 @@ function Navbar() {
             className="md:hidden text-white relative z-50 focus:outline-none"
             onClick={toggleMenu}
           >
-            <Menu size={28} />
+            <Menu size={24} className="h-6 w-6 sm:h-7 sm:w-7" />
           </button>
         )}
       </div>
@@ -103,14 +103,14 @@ function Navbar() {
           className="absolute top-4 right-4 text-white"
           onClick={toggleMenu}
         >
-          <X size={28} />
+          <X size={24} className="h-6 w-6 sm:h-7 sm:w-7" />
         </button>
 
         {navLinks.map(({ to, label }) => (
           <Link
             key={to}
             to={to}
-            className={`py-2 text-xl font-medium transition duration-300 ${
+            className={`py-2 text-base sm:text-lg font-medium transition duration-300 ${
               location.pathname === to
                 ? "text-green-400"
                 : "text-white hover:text-green-400"
@@ -123,27 +123,27 @@ function Navbar() {
 
         {/* Mobile Auth/Profile Section - With Skeleton */}
         {loading ? (
-          <div className="w-36 h-12 bg-gray-700 animate-pulse rounded-xl"></div>
+          <div className="w-32 sm:w-36 h-10 sm:h-12 bg-gray-700 animate-pulse rounded-xl"></div>
         ) : isLoggedIn ? (
           <Link
             to="/profile"
-            className="flex items-center gap-2 py-2 px-6 text-xl font-medium rounded-xl bg-white text-gray-900 hover:bg-gray-200 transition duration-300 shadow-sm border"
+            className="flex items-center gap-2 py-2 px-5 sm:px-6 text-base sm:text-lg font-medium rounded-xl bg-white text-gray-900 hover:bg-gray-200 transition duration-300 shadow-sm border"
             onClick={() => setIsOpen(false)}
           >
-            <User size={22} />
+            <User size={20} className="sm:h-5 sm:w-5" />
             <span>Profile</span>
           </Link>
         ) : (
           <Link
             to="/auth"
-            className={`flex items-center gap-2 py-2 px-6 text-xl font-medium rounded-xl transition duration-300 ${
+            className={`flex items-center gap-2 py-2 px-5 sm:px-6 text-base sm:text-lg font-medium rounded-xl transition duration-300 ${
               location.pathname === "/auth"
                 ? "text-green-400"
                 : "bg-green-600 text-white hover:bg-green-700"
             }`}
             onClick={() => setIsOpen(false)}
           >
-            <LogIn size={22} />
+            <LogIn size={20} className="sm:h-5 sm:w-5" />
             <span>Login</span>
           </Link>
         )}

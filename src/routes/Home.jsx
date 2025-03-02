@@ -36,11 +36,11 @@ TypingDots.displayName = "TypingDots";
 
 const Step = memo(({ icon, title, desc }) => (
   <div className="flex flex-col items-center px-2">
-    <div className="p-4 bg-white rounded-full">{icon}</div>
-    <h3 className="text-base md:text-lg font-semibold mt-3 text-center">
+    <div className="p-3 sm:p-4 bg-white rounded-full">{icon}</div>
+    <h3 className="text-base md:text-lg font-semibold mt-2 sm:mt-3 text-center">
       {title}
     </h3>
-    <p className="text-gray-400 mt-2 text-sm md:text-base text-center">
+    <p className="text-gray-400 mt-1 sm:mt-2 text-sm md:text-base text-center">
       {desc}
     </p>
   </div>
@@ -123,22 +123,22 @@ const WHY_ALGO_ARENA = [
 
 const HOW_IT_WORKS_STEPS = [
   {
-    icon: <TrendingUp size={32} className="text-green-500" />,
+    icon: <TrendingUp size={28} className="text-green-500" />,
     title: "Choose Your Level",
     desc: "Select from Easy, Medium, or Hard challenges.",
   },
   {
-    icon: <Code size={32} className="text-green-500" />,
+    icon: <Code size={28} className="text-green-500" />,
     title: "Solve Problems",
     desc: "Write, test, and optimize your code in our editor.",
   },
   {
-    icon: <CheckCircle size={32} className="text-green-500" />,
+    icon: <CheckCircle size={28} className="text-green-500" />,
     title: "Get Instant Feedback",
     desc: "Receive immediate feedback with test cases.",
   },
   {
-    icon: <UserCheck size={32} className="text-green-500" />,
+    icon: <UserCheck size={28} className="text-green-500" />,
     title: "Level Up",
     desc: "Unlock more challenges as you progress.",
   },
@@ -198,9 +198,33 @@ ActionButton.displayName = "ActionButton";
 
 const Home = () => {
   const { heroQuote, heroMessage, featuredProblems } = useHomeData();
+  const [navbarHeight, setNavbarHeight] = useState(0);
+
+  // Get navbar height for dynamic padding
+  useEffect(() => {
+    const updateNavbarHeight = () => {
+      const navbar = document.querySelector("nav");
+      if (navbar) {
+        setNavbarHeight(navbar.offsetHeight);
+      }
+    };
+
+    // Initial measurement
+    updateNavbarHeight();
+
+    // Update on resize
+    window.addEventListener("resize", updateNavbarHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateNavbarHeight);
+    };
+  }, []);
 
   return (
-    <div className="bg-gray-900 text-white">
+    <div
+      className="bg-gray-900 text-white"
+      style={{ paddingTop: navbarHeight ? `${navbarHeight}px` : "3.5rem" }}
+    >
       {/* Hero Section */}
       <section className="text-center py-10 md:py-16 lg:py-20 px-4 bg-gray-900 text-white">
         <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">
@@ -212,6 +236,7 @@ const Home = () => {
         </p>
         <ActionButton />
       </section>
+
       {/* How It Works Section */}
       <section className="py-10 md:py-16 text-center bg-gray-900 text-white px-4">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-green-500">
@@ -228,6 +253,7 @@ const Home = () => {
           ))}
         </div>
       </section>
+
       {/* Featured Problems */}
       <section className="py-10 md:py-16 bg-gray-900 text-white text-center px-4">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-green-500">
@@ -247,6 +273,7 @@ const Home = () => {
               ))}
         </div>
       </section>
+
       {/* Why AlgoArena */}
       <section className="py-10 md:py-16 text-center bg-gray-900 text-white px-4">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-green-500">
@@ -258,6 +285,7 @@ const Home = () => {
           ))}
         </div>
       </section>
+
       {/* Call to Action */}
       <section className="text-center py-10 md:py-16 bg-gray-900 text-white px-4">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-bold">
