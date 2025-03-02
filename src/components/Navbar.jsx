@@ -30,19 +30,22 @@ function Navbar() {
 
   return (
     <nav className="bg-gray-900 shadow-lg fixed top-0 left-0 w-full z-50 h-20 border-b border-gray-800">
-      <div className="flex items-center justify-between py-4 px-8 relative">
+      <div className="flex items-center justify-between py-4 px-4 lg:px-8 relative">
         {/* Logo */}
-        <Link to="/" className="text-white font-bold text-2xl relative z-50">
+        <Link
+          to="/"
+          className="text-white font-bold text-xl md:text-2xl relative z-50"
+        >
           Algo<span className="text-green-500">Arena</span>
         </Link>
 
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-6">
+        {/* Desktop & Tablet Menu */}
+        <div className="hidden md:flex items-center gap-2 lg:gap-6 flex-wrap">
           {navLinks.map(({ to, label }) => (
             <Link
               key={to}
               to={to}
-              className={`py-2 px-4 text-lg font-medium rounded-xl transition duration-300 ${
+              className={`py-2 px-2 lg:px-4 text-sm lg:text-lg font-medium rounded-xl transition duration-300 ${
                 location.pathname === to
                   ? "text-green-400 bg-gray-800"
                   : "text-white hover:text-green-400"
@@ -54,25 +57,25 @@ function Navbar() {
 
           {/* Auth/Profile Section - With Skeleton Loader */}
           {loading ? (
-            <div className="w-26 h-10 bg-gray-700 animate-pulse rounded-xl"></div>
+            <div className="w-20 lg:w-26 h-10 bg-gray-700 animate-pulse rounded-xl"></div>
           ) : isLoggedIn ? (
             <Link
               to="/profile"
-              className="flex items-center gap-2 py-2 px-4 text-lg font-medium rounded-xl bg-white text-gray-900 hover:bg-gray-200 transition duration-300 shadow-sm border"
+              className="flex items-center gap-1 lg:gap-2 py-2 px-3 lg:px-4 text-sm lg:text-lg font-medium rounded-xl bg-white text-gray-900 hover:bg-gray-200 transition duration-300 shadow-sm border"
             >
-              <User size={20} />
+              <User size={18} className="hidden sm:block" />
               <span>Profile</span>
             </Link>
           ) : (
             <Link
               to="/auth"
-              className={`flex items-center gap-2 py-2 px-4 text-lg font-medium rounded-xl transition duration-300 ml-2 ${
+              className={`flex items-center gap-1 lg:gap-2 py-2 px-3 lg:px-4 text-sm lg:text-lg font-medium rounded-xl transition duration-300 ml-1 lg:ml-2 ${
                 location.pathname === "/auth"
                   ? "text-green-400 bg-gray-800"
                   : "bg-green-600 text-white hover:bg-green-700"
               }`}
             >
-              <LogIn size={20} />
+              <LogIn size={18} className="hidden sm:block" />
               <span>Login</span>
             </Link>
           )}
