@@ -200,9 +200,7 @@ const Home = () => {
   const { heroQuote, heroMessage, featuredProblems } = useHomeData();
 
   return (
-    <div className="bg-gray-900 text-white pt-20">
-      {" "}
-      {/* Added pt-20 to account for fixed navbar */}
+    <div className="bg-gray-900 text-white">
       {/* Hero Section */}
       <section className="text-center py-10 md:py-16 lg:py-20 px-4 bg-gray-900 text-white">
         <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">
