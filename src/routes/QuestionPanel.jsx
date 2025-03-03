@@ -110,24 +110,26 @@ const DifficultyCard = ({ difficulty, isSelected, onSelect }) => {
 
   return (
     <div
-      className={`cursor-pointer p-4 rounded-lg border-2 transition-all ${
+      className={`cursor-pointer p-2 sm:p-4 rounded-lg border-2 transition-all ${
         isSelected
           ? `border-${textColor.split("-")[1]}-500 shadow-lg`
           : "border-gray-700 hover:border-gray-500"
       } flex flex-col`}
       onClick={() => onSelect(value)}
     >
-      <div className="flex items-center mb-3">
-        <div className={`p-2 rounded-md ${color} mr-3`}>
-          <Icon size={16} />
+      <div className="flex items-center mb-2 sm:mb-3">
+        <div className={`p-1 sm:p-2 rounded-md ${color} mr-2 sm:mr-3`}>
+          <Icon size={14} className="sm:w-4 sm:h-4" />
         </div>
-        <h3 className={`text-sm font-bold ${textColor}`}>{label}</h3>
+        <h3 className={`text-xs sm:text-sm font-bold ${textColor}`}>{label}</h3>
       </div>
 
-      <p className="text-sm text-gray-400 flex-grow mb-3">{description}</p>
+      <p className="text-xs sm:text-sm text-gray-400 flex-grow mb-2 sm:mb-3">
+        {description}
+      </p>
 
       <button
-        className={`px-4 py-2 rounded-md text-white font-medium ${color} ${hoverColor} transition-colors w-full`}
+        className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-white font-medium text-xs sm:text-sm ${color} ${hoverColor} transition-colors w-full`}
       >
         {label}
       </button>
@@ -159,21 +161,23 @@ const QuestionContent = memo(({ question, difficulty }) => {
 
   return (
     <div className="p-2">
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-1 sm:gap-2 mb-2">
         <span
-          className={`px-2 py-1 rounded-md ${textColor} bg-opacity-20 text-sm font-medium`}
+          className={`px-1 py-0.5 sm:px-2 sm:py-1 rounded-md ${textColor} bg-opacity-20 text-xs sm:text-sm font-medium`}
         >
           {label}
         </span>
-        <h2 className="text-xl font-bold">{title}</h2>
+        <h2 className="text-base sm:text-xl font-bold">{title}</h2>
       </div>
 
       <div className="prose prose-invert max-w-none">
-        <p className="mb-4">{description}</p>
+        <p className="mb-3 sm:mb-4 text-sm sm:text-base">{description}</p>
 
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2">Example:</h3>
-          <pre className="bg-gray-900 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
+        <div className="mb-3 sm:mb-4">
+          <h3 className="text-sm sm:text-lg font-semibold mb-1 sm:mb-2">
+            Example:
+          </h3>
+          <pre className="bg-gray-900 p-2 sm:p-3 rounded-lg overflow-x-auto whitespace-pre-wrap text-xs sm:text-sm">
             {example}
           </pre>
         </div>
@@ -181,19 +185,19 @@ const QuestionContent = memo(({ question, difficulty }) => {
         <div className="mb-2">
           <button
             onClick={() => setShowConstraints(!showConstraints)}
-            className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors text-xs sm:text-sm"
           >
             <span>Constraints & Requirements</span>
             {showConstraints ? (
-              <ChevronUp size={16} />
+              <ChevronUp size={14} className="sm:w-4 sm:h-4" />
             ) : (
-              <ChevronDown size={16} />
+              <ChevronDown size={14} className="sm:w-4 sm:h-4" />
             )}
           </button>
 
           {showConstraints && (
-            <div className="mt-2 ml-2 text-gray-400 text-sm">
-              <ul className="list-disc pl-5 space-y-1">
+            <div className="mt-2 ml-2 text-gray-400 text-xs sm:text-sm">
+              <ul className="list-disc pl-4 sm:pl-5 space-y-0.5 sm:space-y-1">
                 {constraints.map((constraint, index) => (
                   <li key={index}>{constraint}</li>
                 ))}
@@ -244,20 +248,20 @@ const QuestionPanel = ({ onToggleFullScreen, onDifficultySelected }) => {
   };
 
   return (
-    <div className="p-2 md:p-3 flex flex-col h-full">
+    <div className="p-1 sm:p-2 md:p-3 flex flex-col h-full">
       <div className="sticky top-0 bg-gray-800 z-10">
         <div className="flex justify-between items-center pb-2 border-b border-gray-700 mb-2">
-          <div className="flex items-center gap-2">
-            <FileText size={18} />
-            <span className="font-medium">Question</span>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <FileText size={16} className="sm:w-5 sm:h-5" />
+            <span className="font-medium text-sm sm:text-base">Question</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {!showSelection && (
               <button
                 onClick={handleReset}
-                className="px-4 py-1 bg-gray-700 hover:bg-gray-600 rounded font-medium text-sm transition-colors"
+                className="px-2 py-1 sm:px-4 sm:py-1 bg-gray-700 hover:bg-gray-600 rounded font-medium text-xs sm:text-sm transition-colors"
               >
-                Change Difficulty
+                Change
               </button>
             )}
             <button
@@ -266,9 +270,9 @@ const QuestionPanel = ({ onToggleFullScreen, onDifficultySelected }) => {
               aria-label="Toggle question fullscreen"
             >
               {onToggleFullScreen.activePanel === "question" ? (
-                <Minimize size={18} />
+                <Minimize size={16} className="sm:w-5 sm:h-5" />
               ) : (
-                <Maximize size={18} />
+                <Maximize size={16} className="sm:w-5 sm:h-5" />
               )}
             </button>
           </div>
@@ -277,11 +281,11 @@ const QuestionPanel = ({ onToggleFullScreen, onDifficultySelected }) => {
 
       <div className="flex-grow overflow-auto">
         {showSelection ? (
-          <div className="p-2">
-            <h2 className="text-xl font-bold mb-6 text-center">
+          <div className="p-1 sm:p-2">
+            <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-6 text-center">
               Select Difficulty Level
             </h2>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-2 sm:gap-4">
               {DIFFICULTY_LEVELS.map((difficulty) => (
                 <DifficultyCard
                   key={difficulty.value}
@@ -292,11 +296,11 @@ const QuestionPanel = ({ onToggleFullScreen, onDifficultySelected }) => {
               ))}
             </div>
 
-            <div className="mt-8 p-4 bg-gray-900 rounded-lg border border-gray-700">
-              <h3 className="text-lg font-semibold mb-2">
+            <div className="mt-4 sm:mt-8 p-2 sm:p-4 bg-gray-900 rounded-lg border border-gray-700">
+              <h3 className="text-sm sm:text-lg font-semibold mb-2">
                 Coding Challenge Tips
               </h3>
-              <ul className="list-disc pl-5 space-y-2 text-gray-300">
+              <ul className="list-disc pl-4 sm:pl-5 space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-300">
                 <li>Read the problem statement carefully before starting</li>
                 <li>Consider edge cases in your solution</li>
                 <li>Test your code with various inputs</li>
