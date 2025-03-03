@@ -1,7 +1,15 @@
 import { useState, useEffect, useRef, memo } from "react";
 import Editor from "@monaco-editor/react";
-import { Maximize, Minimize, Code, FileText, Terminal } from "lucide-react";
+import {
+  Maximize,
+  Minimize,
+  Code,
+  Terminal,
+  AlertTriangle,
+  X,
+} from "lucide-react";
 import PropTypes from "prop-types";
+import QuestionPanel from "./QuestionPanel"; // Import the enhanced QuestionPanel
 
 // Language configuration
 const SUPPORTED_LANGUAGES = [
@@ -22,6 +30,51 @@ const LANGUAGE_TEMPLATES = {
   csharp:
     "using System;\n\nclass Program {\n  static void Main() {\n    // Start coding in C#...\n  }\n}",
   cpp: "#include <iostream>\n\nint main() {\n  // Start coding in C++...\n  return 0;\n}",
+};
+
+// Warning Popup Component
+const WarningPopup = ({ onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-800 rounded-lg shadow-lg p-6 max-w-md w-full border border-yellow-600 animate-fadeIn">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center">
+            <div className="p-2 rounded-full bg-yellow-600 mr-3">
+              <AlertTriangle size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-white">
+              Select Difficulty First
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+            aria-label="Close warning"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <p className="text-gray-300 mb-4">
+          Please select a difficulty level before coding. This will ensure you
+          are working on an appropriate challenge.
+        </p>
+
+        <div className="flex justify-end gap-3 mt-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md transition-colors text-white"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+WarningPopup.propTypes = {
+  onClose: PropTypes.func.isRequired,
 };
 
 // Memoized Panel header component with prop validation
@@ -99,37 +152,14 @@ LanguageSelector.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
-// Question panel content
-const QuestionContent = memo(() => (
-  <div className="p-2">
-    <h2 className="text-xl font-bold mb-4">Two Sum Problem</h2>
-    <div className="prose prose-invert">
-      <p className="mb-3">
-        Given an array of integers <code>nums</code> and an integer{" "}
-        <code>target</code>, return indices of the two numbers such that they
-        add up to <code>target</code>.
-      </p>
-      <p className="mb-3">
-        You may assume that each input would have exactly one solution, and you
-        may not use the same element twice.
-      </p>
-      <h3 className="text-lg font-semibold mt-4 mb-2">Example:</h3>
-      <pre className="bg-gray-900 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
-        {`Input: nums = [2,7,11,15], target = 9
-Output: [0,1]
-Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].`}
-      </pre>
-    </div>
-  </div>
-));
-
-QuestionContent.displayName = "QuestionContent";
-
 const CodePlayground = () => {
   const [code, setCode] = useState(LANGUAGE_TEMPLATES.javascript);
   const [output, setOutput] = useState("Output will appear here...");
   const [fullScreenPanel, setFullScreenPanel] = useState(null);
   const [language, setLanguage] = useState("javascript");
+  const [showWarning, setShowWarning] = useState(false);
+  const [difficultySelected, setDifficultySelected] = useState(false);
+  const [editorReadOnly, setEditorReadOnly] = useState(false);
   const editorRef = useRef(null);
   const [pyodide, setPyodide] = useState(null);
 
@@ -143,9 +173,28 @@ const CodePlayground = () => {
     loadPyodideAndPackages();
   }, []);
 
+  // Set editor to read-only if no difficulty is selected
+  useEffect(() => {
+    setEditorReadOnly(!difficultySelected);
+  }, [difficultySelected]);
+
   // Handle editor mounting
   const handleEditorDidMount = (editor) => {
     editorRef.current = editor;
+
+    // Add event listener for keypresses
+    editor.onKeyDown(() => {
+      // If no difficulty is selected and user is trying to type
+      if (!difficultySelected && !showWarning) {
+        setShowWarning(true);
+      }
+    });
+  };
+
+  // Handle difficulty selection from question panel
+  const handleDifficultySelected = () => {
+    setDifficultySelected(true);
+    setEditorReadOnly(false);
   };
 
   // Adjust editor layout when container size changes
@@ -177,6 +226,12 @@ const CodePlayground = () => {
   };
 
   const runCode = async () => {
+    // If no difficulty selected, show warning
+    if (!difficultySelected) {
+      setShowWarning(true);
+      return;
+    }
+
     try {
       if (language === "javascript") {
         let logs = [];
@@ -236,6 +291,9 @@ const CodePlayground = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
+      {/* Warning Popup */}
+      {showWarning && <WarningPopup onClose={() => setShowWarning(false)} />}
+
       {/* Main content area (Editor + Output) */}
       {!isQuestionFullScreen && (
         <div
@@ -263,7 +321,7 @@ const CodePlayground = () => {
                   runAction={runCode}
                   languageSelector={languageSelectorElement}
                 />
-                <div className="flex-grow overflow-hidden">
+                <div className="flex-grow overflow-hidden relative">
                   <Editor
                     height="100%"
                     language={language}
@@ -276,8 +334,25 @@ const CodePlayground = () => {
                       scrollBeyondLastLine: false,
                       fontSize: 14,
                       automaticLayout: true,
+                      readOnly: editorReadOnly,
                     }}
                   />
+
+                  {/* Editor overlay when no difficulty selected - MODIFIED */}
+                  {!difficultySelected && !isQuestionFullScreen && (
+                    <div className="absolute inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center">
+                      <div className="text-center p-4 rounded-lg">
+                        <AlertTriangle
+                          size={40}
+                          className="mx-auto mb-2 text-yellow-500"
+                        />
+                        <p className="text-lg font-semibold">
+                          Please select a difficulty level in the question panel
+                          to start coding
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -298,7 +373,9 @@ const CodePlayground = () => {
                   onToggleFullScreen={toggleFullScreen}
                 />
                 <pre className="flex-grow overflow-auto bg-gray-900 p-2 md:p-3 rounded-lg text-sm">
-                  {output}
+                  {!difficultySelected
+                    ? "Select a difficulty level before running code."
+                    : output}
                 </pre>
               </div>
             </div>
@@ -313,19 +390,11 @@ const CodePlayground = () => {
             isQuestionFullScreen ? "w-full h-full" : "w-full md:w-1/3 h-full"
           } overflow-auto`}
         >
-          <div className="p-2 md:p-3 flex flex-col h-full">
-            <div className="sticky top-0 bg-gray-800 z-10">
-              <PanelHeader
-                icon={FileText}
-                title="Question"
-                panel="question"
-                onToggleFullScreen={toggleFullScreen}
-              />
-            </div>
-            <div className="flex-grow overflow-auto">
-              <QuestionContent />
-            </div>
-          </div>
+          {/* Use the enhanced QuestionPanel component with difficulty selection callback */}
+          <QuestionPanel
+            onToggleFullScreen={toggleFullScreen}
+            onDifficultySelected={handleDifficultySelected}
+          />
         </div>
       )}
     </div>

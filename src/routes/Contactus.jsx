@@ -6,9 +6,10 @@ import {
   FaEnvelope,
   FaCommentAlt,
   FaPaperPlane,
-  FaGithub,
-  FaLinkedin,
   FaTwitter,
+  FaTelegram,
+  FaInstagram,
+  FaYoutube,
 } from "react-icons/fa";
 
 // Memoized components to prevent unnecessary re-renders
@@ -17,7 +18,7 @@ const SocialLink = memo(({ icon, href, label }) => (
     href={href}
     target="_blank"
     rel="noopener noreferrer"
-    className="flex items-center justify-center p-3 bg-gray-800 rounded-full text-green-500 hover:bg-gray-700 transition-colors"
+    className="flex items-center justify-center p-3 bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors"
     aria-label={label}
   >
     {icon}
@@ -46,6 +47,160 @@ ContactOption.propTypes = {
   description: PropTypes.string.isRequired,
 };
 
+const FormField = memo(
+  ({
+    id,
+    name,
+    label,
+    type = "text",
+    value,
+    onChange,
+    placeholder,
+    required = false,
+    rows,
+    options,
+  }) => {
+    if (type === "select") {
+      return (
+        <div>
+          <label
+            htmlFor={id}
+            className="block text-sm font-medium text-gray-300 mb-1"
+          >
+            {label}
+          </label>
+          <select
+            id={id}
+            name={name}
+            value={value}
+            onChange={onChange}
+            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+            required={required}
+          >
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    if (type === "textarea") {
+      return (
+        <div>
+          <label
+            htmlFor={id}
+            className="block text-sm font-medium text-gray-300 mb-1"
+          >
+            {label}
+          </label>
+          <textarea
+            id={id}
+            name={name}
+            value={value}
+            onChange={onChange}
+            rows={rows || 6}
+            required={required}
+            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+            placeholder={placeholder}
+          ></textarea>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <label
+          htmlFor={id}
+          className="block text-sm font-medium text-gray-300 mb-1"
+        >
+          {label}
+        </label>
+        <input
+          type={type}
+          id={id}
+          name={name}
+          value={value}
+          onChange={onChange}
+          required={required}
+          className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+          placeholder={placeholder}
+        />
+      </div>
+    );
+  }
+);
+
+FormField.displayName = "FormField";
+FormField.propTypes = {
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  type: PropTypes.oneOf(["text", "email", "textarea", "select"]),
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+  required: PropTypes.bool,
+  rows: PropTypes.number,
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ),
+};
+
+const SubmitButton = memo(({ isSubmitting }) => (
+  <button
+    type="submit"
+    disabled={isSubmitting}
+    className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+  >
+    {isSubmitting ? (
+      <>
+        <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+        <span>Submitting...</span>
+      </>
+    ) : (
+      <>
+        <FaPaperPlane size={18} />
+        <span>Submit Question</span>
+      </>
+    )}
+  </button>
+));
+
+SubmitButton.displayName = "SubmitButton";
+SubmitButton.propTypes = {
+  isSubmitting: PropTypes.bool.isRequired,
+};
+
+const StatusMessage = memo(({ status }) => {
+  if (!status) return null;
+
+  return (
+    <div
+      className={`p-4 mb-6 rounded-lg ${
+        status.type === "success"
+          ? "bg-green-900 text-green-300"
+          : "bg-red-900 text-red-300"
+      }`}
+    >
+      {status.message}
+    </div>
+  );
+});
+
+StatusMessage.displayName = "StatusMessage";
+StatusMessage.propTypes = {
+  status: PropTypes.shape({
+    type: PropTypes.oneOf(["success", "error"]).isRequired,
+    message: PropTypes.string.isRequired,
+  }),
+};
+
 const Contactus = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -59,12 +214,57 @@ const Contactus = () => {
   const [submitStatus, setSubmitStatus] = useState(null);
   const [navbarHeight, setNavbarHeight] = useState(0);
 
+  const difficultyOptions = [
+    { value: "Easy", label: "Easy" },
+    { value: "Medium", label: "Medium" },
+    { value: "Hard", label: "Hard" },
+  ];
+
+  const socialLinks = [
+    {
+      icon: <FaTelegram size={24} />,
+      href: "https://web.telegram.org/",
+      label: "Telegram",
+    },
+    {
+      icon: <FaInstagram size={24} />,
+      href: "https://www.instagram.com/",
+      label: "Instagram",
+    },
+    { icon: <FaTwitter size={24} />, href: "https://x.com/", label: "Twitter" },
+    {
+      icon: <FaYoutube size={24} />,
+      href: "https://www.youtube.com/",
+      label: "Youtube",
+    },
+  ];
+
+  const contactOptions = [
+    {
+      icon: <FaEnvelope size={28} className="text-green-500" />,
+      title: "Email Us",
+      description:
+        "Have a general inquiry? Our team is ready to answer your questions at support@algoarena.com",
+    },
+    {
+      icon: <FaCommentAlt size={28} className="text-green-500" />,
+      title: "Submit an Interview Question",
+      description:
+        "Share a coding challenge you faced in an interview to help others prepare.",
+    },
+  ];
+
   // Get navbar height for dynamic padding
   useEffect(() => {
     const navbar = document.querySelector("nav");
     if (navbar) {
       setNavbarHeight(navbar.offsetHeight);
     }
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      // No cleanup needed for this effect
+    };
   }, []);
 
   const handleChange = (e) => {
@@ -99,9 +299,12 @@ const Contactus = () => {
       });
 
       // Clear success message after 5 seconds
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setSubmitStatus(null);
       }, 5000);
+
+      // Cleanup timeout if component unmounts
+      return () => clearTimeout(timer);
     } catch (error) {
       console.error("Error submitting question:", error);
       setSubmitStatus({
@@ -122,7 +325,7 @@ const Contactus = () => {
       {/* Hero Section */}
       <section className="text-center py-10 md:py-16 px-4 bg-gray-900 text-white">
         <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">
-          Get in <span className="text-green-500">Touch</span> with AlgoArena
+          Get in touch with Algo<span className="text-green-500">Arena</span>
         </h1>
         <p className="text-base md:text-lg mt-3 text-gray-300 max-w-2xl mx-auto">
           Have a question from a technical interview? Want to contribute or give
@@ -133,16 +336,14 @@ const Contactus = () => {
       {/* Contact Options */}
       <section className="py-10 bg-gray-900 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ContactOption
-            icon={<FaEnvelope size={28} className="text-green-500" />}
-            title="Email Us"
-            description="Have a general inquiry? Our team is ready to answer your questions at support@algoarena.com"
-          />
-          <ContactOption
-            icon={<FaCommentAlt size={28} className="text-green-500" />}
-            title="Submit an Interview Question"
-            description="Share a coding challenge you faced in an interview to help others prepare."
-          />
+          {contactOptions.map((option, index) => (
+            <ContactOption
+              key={index}
+              icon={option.icon}
+              title={option.title}
+              description={option.description}
+            />
+          ))}
         </div>
       </section>
 
@@ -150,156 +351,78 @@ const Contactus = () => {
       <section className="py-10 md:py-16 bg-gray-900 px-4">
         <div className="max-w-3xl mx-auto bg-gray-800 rounded-lg shadow-lg p-6 md:p-8">
           <h2 className="text-xl md:text-2xl font-bold mb-6 text-center">
-            <span className="text-green-500">Submit</span> a Technical Interview
-            Question
+            Submit a{" "}
+            <span className="text-green-500">Technical Interview Question</span>
           </h2>
 
-          {submitStatus && (
-            <div
-              className={`p-4 mb-6 rounded-lg ${
-                submitStatus.type === "success"
-                  ? "bg-green-900 text-green-300"
-                  : "bg-red-900 text-red-300"
-              }`}
-            >
-              {submitStatus.message}
-            </div>
-          )}
+          <StatusMessage status={submitStatus} />
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-300 mb-1"
-                >
-                  Your Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
-                  placeholder="John Doe"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-300 mb-1"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
-                  placeholder="johndoe@example.com"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="company"
-                className="block text-sm font-medium text-gray-300 mb-1"
-              >
-                Company (Optional)
-              </label>
-              <input
-                type="text"
-                id="company"
-                name="company"
-                value={formData.company}
+              <FormField
+                id="name"
+                name="name"
+                label="Your Name"
+                value={formData.name}
                 onChange={handleChange}
-                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
-                placeholder="Where was this question asked?"
+                required={true}
+                placeholder="John Doe"
+              />
+              <FormField
+                id="email"
+                name="email"
+                type="email"
+                label="Email Address"
+                value={formData.email}
+                onChange={handleChange}
+                required={true}
+                placeholder="johndoe@example.com"
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="questionTitle"
-                className="block text-sm font-medium text-gray-300 mb-1"
-              >
-                Question Title
-              </label>
-              <input
-                type="text"
-                id="questionTitle"
-                name="questionTitle"
-                value={formData.questionTitle}
-                onChange={handleChange}
-                required
-                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
-                placeholder="e.g., 'Implement a Binary Search Tree'"
-              />
-            </div>
+            <FormField
+              id="company"
+              name="company"
+              label="Company (Optional)"
+              value={formData.company}
+              onChange={handleChange}
+              placeholder="Where was this question asked?"
+            />
 
-            <div>
-              <label
-                htmlFor="difficulty"
-                className="block text-sm font-medium text-gray-300 mb-1"
-              >
-                Difficulty Level
-              </label>
-              <select
-                id="difficulty"
-                name="difficulty"
-                value={formData.difficulty}
-                onChange={handleChange}
-                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
-              >
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
-            </div>
+            <FormField
+              id="questionTitle"
+              name="questionTitle"
+              label="Question Title"
+              value={formData.questionTitle}
+              onChange={handleChange}
+              required={true}
+              placeholder="e.g., 'Implement a Binary Search Tree'"
+            />
 
-            <div>
-              <label
-                htmlFor="questionDescription"
-                className="block text-sm font-medium text-gray-300 mb-1"
-              >
-                Question Description
-              </label>
-              <textarea
-                id="questionDescription"
-                name="questionDescription"
-                value={formData.questionDescription}
-                onChange={handleChange}
-                required
-                rows="6"
-                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
-                placeholder="Please provide the full question details, including any constraints, input/output examples, and expected time/space complexity."
-              ></textarea>
-            </div>
+            <FormField
+              id="difficulty"
+              name="difficulty"
+              type="select"
+              label="Difficulty Level"
+              value={formData.difficulty}
+              onChange={handleChange}
+              options={difficultyOptions}
+            />
+
+            <FormField
+              id="questionDescription"
+              name="questionDescription"
+              type="textarea"
+              label="Question Description"
+              value={formData.questionDescription}
+              onChange={handleChange}
+              required={true}
+              rows={6}
+              placeholder="Please provide the full question details, including any constraints, input/output examples, and expected time/space complexity."
+            />
 
             <div className="flex justify-center">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    <span>Submitting...</span>
-                  </>
-                ) : (
-                  <>
-                    <FaPaperPlane size={18} />
-                    <span>Submit Question</span>
-                  </>
-                )}
-              </button>
+              <SubmitButton isSubmitting={isSubmitting} />
             </div>
           </form>
         </div>
@@ -307,30 +430,18 @@ const Contactus = () => {
 
       {/* Social Links */}
       <section className="py-10 md:py-16 bg-gray-900 text-white text-center px-4">
-        <h2 className="text-xl md:text-2xl font-bold mb-8 text-green-500">
+        <h2 className="text-xl md:text-2xl font-bold mb-8 text-white">
           Connect With Us
         </h2>
         <div className="flex justify-center space-x-6 mb-8">
-          <SocialLink
-            icon={<FaGithub size={24} />}
-            href="https://github.com/algoarena"
-            label="GitHub"
-          />
-          <SocialLink
-            icon={<FaLinkedin size={24} />}
-            href="https://linkedin.com/company/algoarena"
-            label="LinkedIn"
-          />
-          <SocialLink
-            icon={<FaTwitter size={24} />}
-            href="https://twitter.com/algoarena"
-            label="Twitter"
-          />
-          <SocialLink
-            icon={<FaEnvelope size={24} />}
-            href="mailto:contact@algoarena.com"
-            label="Email"
-          />
+          {socialLinks.map((link, index) => (
+            <SocialLink
+              key={index}
+              icon={link.icon}
+              href={link.href}
+              label={link.label}
+            />
+          ))}
         </div>
       </section>
     </div>

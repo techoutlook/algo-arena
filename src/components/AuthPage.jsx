@@ -222,7 +222,7 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-80px)] bg-gray-900 text-white overflow-hidden">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-76px)] bg-gray-900 text-white overflow-hidden">
       {/* Left panel - Auth form */}
       <div className="w-full md:w-1/2 h-full flex items-center justify-center p-4 md:p-8 lg:p-12">
         <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
