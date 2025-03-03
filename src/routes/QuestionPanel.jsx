@@ -281,7 +281,7 @@ const QuestionPanel = ({ onToggleFullScreen, onDifficultySelected }) => {
             <h2 className="text-xl font-bold mb-6 text-center">
               Select Difficulty Level
             </h2>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {DIFFICULTY_LEVELS.map((difficulty) => (
                 <DifficultyCard
                   key={difficulty.value}
