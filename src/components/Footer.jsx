@@ -1,7 +1,8 @@
-import { useState, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import { db } from "../firebase";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { Link } from "react-router-dom";
+import PropTypes from "prop-types"; // Import PropTypes
 import {
   FaInstagram,
   FaYoutube,
@@ -13,10 +14,112 @@ import {
   FaBlogger,
   FaEnvelope,
   FaPlay,
-  FaLock,
-  FaFileAlt,
+  FaShieldAlt,
+  FaFileContract,
   FaCookieBite,
 } from "react-icons/fa";
+
+// Policy Modal Component
+const PolicyModal = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-75 flex justify-center items-center">
+      <div className="relative bg-gray-800 w-full max-w-3xl m-4 rounded-lg shadow-xl">
+        <div className="flex justify-between items-center p-4 border-b border-gray-700">
+          <h3 className="text-xl font-bold text-white">{title}</h3>
+          <button
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-white"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+        <div className="p-6 max-h-[70vh] overflow-y-auto">
+          <div className="text-gray-300 space-y-4">{children}</div>
+        </div>
+        <div className="p-4 border-t border-gray-700 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Add PropTypes validation
+PolicyModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
+
+// Cookie Banner Component
+const CookieBanner = ({ visible, onAccept, onCustomize }) => {
+  if (!visible) return null;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-4 md:p-6 z-40">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="text-gray-300 text-sm md:text-base flex-1">
+          <p className="mb-2">
+            <FaCookieBite className="inline mr-2 text-green-500" /> We use
+            cookies to enhance your experience on our website. By continuing to
+            use this site, you consent to our use of cookies.
+          </p>
+          <p>
+            Learn more in our{" "}
+            <button
+              className="text-green-500 hover:underline"
+              onClick={onCustomize}
+            >
+              Cookie Policy
+            </button>
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={onAccept}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Accept All
+          </button>
+          <button
+            onClick={onCustomize}
+            className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
+          >
+            Customize
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Add PropTypes validation
+CookieBanner.propTypes = {
+  visible: PropTypes.bool.isRequired,
+  onAccept: PropTypes.func.isRequired,
+  onCustomize: PropTypes.func.isRequired,
+};
 
 // Extracted social media links to a separate component
 const SocialMediaLinks = () => (
@@ -56,7 +159,7 @@ const ProblemCategories = () => (
       ].map((category, index) => (
         <li key={index}>
           <Link
-            to="/Codeplayground"
+            to="/codeplayground"
             className="text-gray-400 hover:text-green-500 transition-colors"
           >
             {category}
@@ -110,6 +213,21 @@ const Footer = () => {
     success: false,
     message: "Get the Latest News Delivered to Your Inbox!",
   });
+  const [activePolicy, setActivePolicy] = useState(null);
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+  // Check for cookie consent on component mount - Fixed to use useEffect
+  useEffect(() => {
+    const cookiesAccepted = localStorage.getItem("cookiesAccepted");
+    if (!cookiesAccepted) {
+      setShowCookieBanner(true);
+    }
+  }, []);
+
+  const acceptCookies = () => {
+    localStorage.setItem("cookiesAccepted", "true");
+    setShowCookieBanner(false);
+  };
 
   const handleEmailChange = (e) => setEmail(e.target.value);
 
@@ -243,22 +361,202 @@ const Footer = () => {
             </p>
             <div className="flex space-x-6">
               {[
-                { icon: <FaLock className="mr-1" />, text: "Privacy" },
-                { icon: <FaFileAlt className="mr-1" />, text: "Terms" },
-                { icon: <FaCookieBite className="mr-1" />, text: "Cookies" },
+                {
+                  icon: <FaShieldAlt className="mr-1" />,
+                  text: "Privacy",
+                  policyId: "privacy",
+                },
+                {
+                  icon: <FaFileContract className="mr-1" />,
+                  text: "Terms",
+                  policyId: "terms",
+                },
+                {
+                  icon: <FaCookieBite className="mr-1" />,
+                  text: "Cookies",
+                  policyId: "cookie",
+                },
               ].map((item, index) => (
-                <Link
+                <button
                   key={index}
-                  to="/contactus"
+                  onClick={() => setActivePolicy(item.policyId)}
                   className="text-sm text-gray-500 hover:text-gray-400 transition-colors flex items-center"
                 >
                   {item.icon} {item.text}
-                </Link>
+                </button>
               ))}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Cookie Banner */}
+      <CookieBanner
+        visible={showCookieBanner}
+        onAccept={acceptCookies}
+        onCustomize={() => setActivePolicy("cookie")}
+      />
+
+      {/* Privacy Policy Modal */}
+      <PolicyModal
+        isOpen={activePolicy === "privacy"}
+        onClose={() => setActivePolicy(null)}
+        title="Privacy Policy"
+      >
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Our Commitment to Your Privacy
+        </h4>
+        <p className="mb-3">
+          At AlgoArena, we take your privacy seriously. This Privacy Policy
+          outlines how we collect, use, store, and protect your personal
+          information when you use our platform.
+        </p>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Information We Collect
+        </h4>
+        <p className="mb-3">
+          We collect information that you provide directly to us, such as your
+          name, email address, and company information when you submit interview
+          questions or contact us. We also collect usage data, including your IP
+          address, browser type, and pages visited.
+        </p>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          How We Use Your Information
+        </h4>
+        <p className="mb-3">
+          We use your information to provide and improve our services, respond
+          to your inquiries, send updates about our platform, and analyze how
+          users interact with our website to enhance user experience.
+        </p>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Data Security
+        </h4>
+        <p className="mb-3">
+          We implement appropriate security measures to protect your personal
+          information from unauthorized access, alteration, or disclosure. Your
+          data is stored on secure servers and we regularly review our security
+          practices.
+        </p>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Your Rights
+        </h4>
+        <p>
+          You have the right to access, correct, or delete your personal
+          information. You may also object to our processing of your data or
+          request that we restrict how we use it. To exercise these rights,
+          please contact us at privacy@algoarena.com.
+        </p>
+      </PolicyModal>
+
+      {/* Terms of Service Modal */}
+      <PolicyModal
+        isOpen={activePolicy === "terms"}
+        onClose={() => setActivePolicy(null)}
+        title="Terms of Service"
+      >
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Terms of Service Agreement
+        </h4>
+        <p className="mb-3">
+          Welcome to AlgoArena. By accessing or using our platform, you agree to
+          be bound by these Terms of Service. Please read them carefully.
+        </p>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Use of Our Services
+        </h4>
+        <p className="mb-3">
+          You may use our services only as permitted by these terms and
+          applicable laws. You are responsible for ensuring that your use of our
+          platform complies with all relevant regulations.
+        </p>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          User Content
+        </h4>
+        <p className="mb-3">
+          When you submit content to our platform, you grant AlgoArena a
+          worldwide, non-exclusive, royalty-free license to use, reproduce,
+          modify, and distribute that content for the purpose of providing and
+          improving our services.
+        </p>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Intellectual Property
+        </h4>
+        <p className="mb-3">
+          All content, features, and functionality of our platform, including
+          but not limited to text, graphics, logos, icons, and software, are
+          owned by AlgoArena and are protected by copyright, trademark, and
+          other intellectual property laws.
+        </p>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Limitation of Liability
+        </h4>
+        <p>
+          AlgoArena shall not be liable for any indirect, incidental, special,
+          consequential, or punitive damages arising out of or relating to your
+          use of our platform. Our liability is limited to the maximum extent
+          permitted by law.
+        </p>
+      </PolicyModal>
+
+      {/* Cookie Policy Modal */}
+      <PolicyModal
+        isOpen={activePolicy === "cookie"}
+        onClose={() => setActivePolicy(null)}
+        title="Cookie Policy"
+      >
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Our Use of Cookies
+        </h4>
+        <p className="mb-3">
+          AlgoArena uses cookies and similar technologies to enhance your
+          experience on our platform, analyze usage patterns, and deliver
+          personalized content.
+        </p>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          What Are Cookies?
+        </h4>
+        <p className="mb-3">
+          Cookies are small text files that are placed on your device when you
+          visit our website. They allow us to recognize your device and remember
+          certain information about your visit, such as your preferences and
+          actions on our site.
+        </p>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Types of Cookies We Use
+        </h4>
+        <ul className="list-disc pl-5 mb-3 space-y-2">
+          <li>
+            <span className="font-medium">Essential Cookies:</span> These are
+            necessary for the website to function properly and cannot be
+            switched off.
+          </li>
+          <li>
+            <span className="font-medium">Performance Cookies:</span> These help
+            us understand how visitors interact with our website, allowing us to
+            improve the user experience.
+          </li>
+          <li>
+            <span className="font-medium">Functional Cookies:</span> These
+            enable enhanced functionality and personalization, such as
+            remembering your preferences.
+          </li>
+          <li>
+            <span className="font-medium">Targeting Cookies:</span> These may be
+            set by our advertising partners to display ads that are relevant to
+            your interests.
+          </li>
+        </ul>
+        <h4 className="text-lg font-semibold mb-3 text-green-500">
+          Managing Cookies
+        </h4>
+        <p>
+          You can control and/or delete cookies as you wish through your browser
+          settings. You can delete all cookies that are already on your device
+          and set most browsers to prevent them from being placed. However,
+          doing so may affect your ability to use certain features of our
+          website.
+        </p>
+      </PolicyModal>
     </footer>
   );
 };
