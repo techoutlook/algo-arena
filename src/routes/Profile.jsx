@@ -129,6 +129,21 @@ function Profile() {
     return () => unsubscribe();
   }, [auth, navigate]);
 
+  useEffect(() => {
+    // Initial scroll
+    window.scrollTo(0, 0);
+
+    // Try again after a short delay to ensure DOM is fully rendered
+    const timer = setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "auto",
+      });
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Reload user to check email verification status
   const reloadUser = async () => {
     try {
@@ -565,252 +580,436 @@ function Profile() {
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-        {/* Header with profile photo */}
-        <div className="relative bg-gradient-to-r from-green-600 to-green-400 h-28 sm:h-40 flex items-center justify-center">
-          <div className="absolute -bottom-12 sm:-bottom-16 w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-gray-800 overflow-hidden bg-gray-700">
-            {photoLoading ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+      <div className="max-w-4xl mx-auto">
+        {/* Profile Header with email verification status and controls */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6">
+          <h1 className="text-2xl font-bold text-white mb-4 sm:mb-0">
+            Profile
+          </h1>
+
+          {/* Email verification status */}
+          <div className="mb-4 sm:mb-0 sm:mr-4 flex items-center">
+            {user.emailVerified ? (
+              <div className="flex items-center text-green-400 text-sm">
+                <Shield className="mr-1" size={16} />
+                <span>Email verified</span>
               </div>
-            ) : photoURL ? (
-              <img
-                src={photoURL}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-600">
-                <User size={32} className="text-gray-300" />
+              <div
+                className="flex items-center text-yellow-400 text-sm cursor-pointer"
+                onClick={() => {
+                  setVerificationAction("verify");
+                  setShowVerificationModal(true);
+                  setVerificationError("");
+                  setVerificationSent(false);
+                }}
+              >
+                <AlertCircle className="mr-1" size={16} />
+                <span>Email not verified - Click to verify</span>
               </div>
             )}
+          </div>
 
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handlePhotoUpload}
-              className="hidden"
-              accept="image/jpeg,image/png,image/gif"
-            />
+          {/* Desktop buttons */}
+          <div className="hidden sm:flex sm:space-x-2">
+            <button
+              onClick={initiateEditProfile}
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+                editing
+                  ? "bg-gray-600 hover:bg-gray-700"
+                  : "bg-green-500 hover:bg-green-600"
+              }`}
+            >
+              {editing ? "Cancel" : "Edit Profile"}
+            </button>
+
+            {editing && (
+              <button
+                onClick={saveProfile}
+                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-green-500 hover:bg-green-600 transition"
+              >
+                Save
+              </button>
+            )}
 
             <button
-              onClick={() => fileInputRef.current.click()}
-              className="absolute bottom-0 right-0 bg-green-500 hover:bg-green-600 p-1 rounded-full transition"
-              title="Upload profile photo"
+              onClick={handleSignOut}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-gray-700 hover:bg-gray-600 transition"
             >
-              <Upload size={14} />
+              Sign Out
             </button>
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="sm:hidden">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
+            >
+              <Menu size={20} />
+            </button>
+
+            {/* Mobile menu dropdown */}
+            {mobileMenuOpen && (
+              <div className="absolute right-4 mt-2 w-48 rounded-md shadow-lg bg-gray-700 ring-1 ring-black ring-opacity-5 z-10">
+                <div className="py-1" role="menu" aria-orientation="vertical">
+                  <button
+                    onClick={initiateEditProfile}
+                    className={`block w-full text-left px-4 py-2 text-sm ${
+                      editing
+                        ? "text-gray-300 hover:bg-gray-600"
+                        : "text-white hover:bg-green-600 bg-green-500"
+                    }`}
+                  >
+                    {editing ? "Cancel" : "Edit Profile"}
+                  </button>
+
+                  {editing && (
+                    <button
+                      onClick={saveProfile}
+                      className="block w-full text-left px-4 py-2 text-sm text-white bg-green-500 hover:bg-green-600"
+                    >
+                      Save
+                    </button>
+                  )}
+
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Profile content */}
-        <div className="pt-16 sm:pt-20 px-4 sm:px-6 pb-6">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6">
-            <h1 className="text-2xl font-bold text-white mb-4 sm:mb-0">
-              Profile
-            </h1>
-
-            {/* Email verification status */}
-            <div className="mb-4 sm:mb-0 sm:mr-4 flex items-center">
-              {user.emailVerified ? (
-                <div className="flex items-center text-green-400 text-sm">
-                  <Shield className="mr-1" size={16} />
-                  <span>Email verified</span>
-                </div>
-              ) : (
-                <div
-                  className="flex items-center text-yellow-400 text-sm cursor-pointer"
-                  onClick={() => {
-                    setVerificationAction("verify");
-                    setShowVerificationModal(true);
-                    setVerificationError("");
-                    setVerificationSent(false);
-                  }}
-                >
-                  <AlertCircle className="mr-1" size={16} />
-                  <span>Email not verified - Click to verify</span>
-                </div>
-              )}
-            </div>
-
-            {/* Desktop buttons */}
-            <div className="hidden sm:flex sm:space-x-2">
-              <button
-                onClick={initiateEditProfile}
-                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
-                  editing
-                    ? "bg-gray-600 hover:bg-gray-700"
-                    : "bg-green-500 hover:bg-green-600"
-                }`}
-              >
-                {editing ? "Cancel" : "Edit Profile"}
-              </button>
-
-              {editing && (
-                <button
-                  onClick={saveProfile}
-                  className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-green-500 hover:bg-green-600 transition"
-                >
-                  Save
-                </button>
-              )}
-
-              <button
-                onClick={handleSignOut}
-                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-gray-700 hover:bg-gray-600 transition"
-              >
-                Sign Out
-              </button>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="sm:hidden">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
-              >
-                <Menu size={20} />
-              </button>
-
-              {/* Mobile menu dropdown */}
-              {mobileMenuOpen && (
-                <div className="absolute right-4 mt-2 w-48 rounded-md shadow-lg bg-gray-700 ring-1 ring-black ring-opacity-5 z-10">
-                  <div className="py-1" role="menu" aria-orientation="vertical">
-                    <button
-                      onClick={initiateEditProfile}
-                      className={`block w-full text-left px-4 py-2 text-sm ${
-                        editing
-                          ? "text-gray-300 hover:bg-gray-600"
-                          : "text-white hover:bg-green-600 bg-green-500"
-                      }`}
-                    >
-                      {editing ? "Cancel" : "Edit Profile"}
-                    </button>
-
-                    {editing && (
-                      <button
-                        onClick={saveProfile}
-                        className="block w-full text-left px-4 py-2 text-sm text-white bg-green-500 hover:bg-green-600"
-                      >
-                        Save
-                      </button>
-                    )}
-
-                    <button
-                      onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
-                    >
-                      Sign Out
-                    </button>
+        {/* Main Profile Card - Horizontal layout on desktop */}
+        <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+          {/* Mobile view - vertical layout */}
+          <div className="sm:hidden">
+            <div className="bg-gradient-to-r from-green-600 to-green-400 h-28 flex items-center justify-center relative">
+              <div className="absolute -bottom-12 w-24 h-24 rounded-full border-4 border-gray-800 overflow-hidden bg-gray-700">
+                {photoLoading ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
                   </div>
+                ) : photoURL ? (
+                  <img
+                    src={photoURL}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-600">
+                    <User size={32} className="text-gray-300" />
+                  </div>
+                )}
+
+                <button
+                  onClick={() => fileInputRef.current.click()}
+                  className="absolute bottom-0 right-0 bg-green-500 hover:bg-green-600 p-1 rounded-full transition"
+                  title="Upload profile photo"
+                >
+                  <Upload size={14} />
+                </button>
+              </div>
+            </div>
+            <div className="pt-16 px-4 pb-6">
+              {/* Profile content for mobile */}
+              <div className="space-y-4">
+                {/* Profile details rendered here for mobile */}
+                {/* Display name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">
+                    Name
+                  </label>
+                  {editing ? (
+                    <input
+                      type="text"
+                      name="displayName"
+                      value={userData.displayName}
+                      onChange={handleInputChange}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  ) : (
+                    <p className="text-white">
+                      {userData.displayName || "Not set"}
+                    </p>
+                  )}
                 </div>
-              )}
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">
+                    Email
+                  </label>
+                  <p className="text-white break-words">{userData.email}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Email cannot be changed
+                  </p>
+                </div>
+
+                {/* Location */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">
+                    Location
+                  </label>
+                  {editing ? (
+                    <input
+                      type="text"
+                      name="location"
+                      value={userData.location}
+                      onChange={handleInputChange}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="City, Country"
+                    />
+                  ) : (
+                    <p className="text-white">
+                      {userData.location || "Not set"}
+                    </p>
+                  )}
+                </div>
+
+                {/* Profession */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">
+                    Profession
+                  </label>
+                  {editing ? (
+                    <input
+                      type="text"
+                      name="profession"
+                      value={userData.profession}
+                      onChange={handleInputChange}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Software Engineer, Student, etc."
+                    />
+                  ) : (
+                    <p className="text-white">
+                      {userData.profession || "Not set"}
+                    </p>
+                  )}
+                </div>
+
+                {/* GitHub Profile */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">
+                    GitHub Profile
+                  </label>
+                  {editing ? (
+                    <input
+                      type="text"
+                      name="githubLink"
+                      value={userData.githubLink}
+                      onChange={handleInputChange}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="https://github.com/username"
+                    />
+                  ) : (
+                    <p className="text-white break-words">
+                      {userData.githubLink ? (
+                        <a
+                          href={userData.githubLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-400 hover:text-green-300"
+                        >
+                          {userData.githubLink}
+                        </a>
+                      ) : (
+                        "Not set"
+                      )}
+                    </p>
+                  )}
+                </div>
+
+                {/* Bio */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">
+                    Bio
+                  </label>
+                  {editing ? (
+                    <textarea
+                      name="bio"
+                      value={userData.bio}
+                      onChange={handleInputChange}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-24"
+                      placeholder="Tell us a bit about yourself..."
+                    />
+                  ) : (
+                    <p className="text-white">{userData.bio || "Not set"}</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Name
-                </label>
-                {editing ? (
-                  <input
-                    type="text"
-                    name="displayName"
-                    value={userData.displayName}
-                    onChange={handleInputChange}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+          {/* Desktop view - horizontal layout */}
+          <div className="hidden sm:flex p-6">
+            {/* Left side - Profile photo */}
+            <div className="flex-shrink-0 mr-8 w-48">
+              <div className="relative w-40 h-40 rounded-lg border-4 border-gray-700 overflow-hidden bg-gray-700 mb-4">
+                {photoLoading ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-white"></div>
+                  </div>
+                ) : photoURL ? (
+                  <img
+                    src={photoURL}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <p className="text-white">
-                    {userData.displayName || "Not set"}
-                  </p>
+                  <div className="w-full h-full flex items-center justify-center bg-gray-600">
+                    <User size={48} className="text-gray-300" />
+                  </div>
                 )}
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Email
-                </label>
-                <p className="text-white break-words">{userData.email}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Email cannot be changed
-                </p>
-              </div>
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/gif"
+                />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Location
-                </label>
-                {editing ? (
-                  <input
-                    type="text"
-                    name="location"
-                    value={userData.location}
-                    onChange={handleInputChange}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="City, Country"
-                  />
-                ) : (
-                  <p className="text-white">{userData.location || "Not set"}</p>
-                )}
+                {/* Upload button */}
+                <button
+                  onClick={() => fileInputRef.current.click()}
+                  className="absolute bottom-2 right-2 bg-green-500 hover:bg-green-600 p-2 rounded-lg transition flex items-center"
+                  title="Upload profile photo"
+                >
+                  <Upload size={16} className="mr-1" />
+                  <span className="text-xs">Upload</span>
+                </button>
               </div>
+              <p className="text-gray-400 text-xs">
+                Upload an image (max 2MB)
+                <br />
+                JPEG, PNG or GIF
+              </p>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Profession
-                </label>
-                {editing ? (
-                  <input
-                    type="text"
-                    name="profession"
-                    value={userData.profession}
-                    onChange={handleInputChange}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="Software Engineer, Student, etc."
-                  />
-                ) : (
-                  <p className="text-white">
-                    {userData.profession || "Not set"}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  GitHub Profile
-                </label>
-                {editing ? (
-                  <input
-                    type="text"
-                    name="githubLink"
-                    value={userData.githubLink}
-                    onChange={handleInputChange}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="https://github.com/username"
-                  />
-                ) : (
-                  <p className="text-white break-words">
-                    {userData.githubLink ? (
-                      <a
-                        href={userData.githubLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-green-400 hover:text-green-300"
-                      >
-                        {userData.githubLink}
-                      </a>
+            {/* Right side - Profile details */}
+            <div className="flex-grow">
+              <div className="grid grid-cols-2 gap-6">
+                {/* Left column */}
+                <div className="space-y-4">
+                  {/* Display name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">
+                      Name
+                    </label>
+                    {editing ? (
+                      <input
+                        type="text"
+                        name="displayName"
+                        value={userData.displayName}
+                        onChange={handleInputChange}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
                     ) : (
-                      "Not set"
+                      <p className="text-white">
+                        {userData.displayName || "Not set"}
+                      </p>
                     )}
-                  </p>
-                )}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">
+                      Email
+                    </label>
+                    <p className="text-white break-words">{userData.email}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Email cannot be changed
+                    </p>
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">
+                      Location
+                    </label>
+                    {editing ? (
+                      <input
+                        type="text"
+                        name="location"
+                        value={userData.location}
+                        onChange={handleInputChange}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="City, Country"
+                      />
+                    ) : (
+                      <p className="text-white">
+                        {userData.location || "Not set"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right column */}
+                <div className="space-y-4">
+                  {/* Profession */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">
+                      Profession
+                    </label>
+                    {editing ? (
+                      <input
+                        type="text"
+                        name="profession"
+                        value={userData.profession}
+                        onChange={handleInputChange}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="Software Engineer, Student, etc."
+                      />
+                    ) : (
+                      <p className="text-white">
+                        {userData.profession || "Not set"}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* GitHub Profile */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">
+                      GitHub Profile
+                    </label>
+                    {editing ? (
+                      <input
+                        type="text"
+                        name="githubLink"
+                        value={userData.githubLink}
+                        onChange={handleInputChange}
+                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="https://github.com/username"
+                      />
+                    ) : (
+                      <p className="text-white break-words">
+                        {userData.githubLink ? (
+                          <a
+                            href={userData.githubLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-400 hover:text-green-300"
+                          >
+                            {userData.githubLink}
+                          </a>
+                        ) : (
+                          "Not set"
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div>
+              {/* Bio - Full width */}
+              <div className="mt-6">
                 <label className="block text-sm font-medium text-gray-400 mb-1">
                   Bio
                 </label>
@@ -829,20 +1028,13 @@ function Profile() {
             </div>
           </div>
 
-          {/* Danger Zone */}
-          <div className="mt-10 border border-red-800 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-red-500 mb-2">
-              Danger Zone
-            </h3>
-            <p className="text-gray-400 text-sm mb-4">
-              Permanently delete your account and all associated data. This
-              action cannot be undone.
-            </p>
+          {/* Delete Account Button - Both views */}
+          <div className="px-6 pb-6 mt-4">
             <button
               onClick={initiateDeleteAccount}
-              className="flex items-center px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-lg transition"
+              className="flex items-center text-red-400 hover:text-red-300 text-sm"
             >
-              <Trash2 size={16} className="mr-2" />
+              <Trash2 size={16} className="mr-1" />
               Delete Account
             </button>
           </div>
@@ -852,200 +1044,180 @@ function Profile() {
       {/* Email Verification Modal */}
       {showVerificationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 px-4">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-white mb-4">
-              Email Verification Required
-            </h3>
+          <div className="bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold mb-4">Verify Your Email</h2>
+
             <p className="text-gray-300 mb-4">
               {verificationAction === "edit"
-                ? "To edit your profile, you need to verify your email address."
+                ? "Email verification is required to edit your profile."
                 : verificationAction === "delete"
-                ? "To delete your account, you need to verify your email address."
-                : "Please verify your email address to access all features."}
+                ? "Email verification is required to delete your account."
+                : "Please verify your email address to continue."}
             </p>
 
-            <div className="mb-6">
-              <p className="text-gray-400 mb-4">
-                {!verificationSent
-                  ? `Click the button below to send a verification email to: ${userData.email}`
-                  : "A verification email has been sent. Please check your inbox and click the verification link. If you don't see it, check your spam folder."}
+            <div className="flex items-center mb-4 text-yellow-400 text-sm">
+              <Mail className="mr-2" size={20} />
+              <p>
+                A verification link will be sent to:{" "}
+                <strong>{user.email}</strong>
               </p>
-
-              {verificationError && (
-                <div className="bg-red-900 bg-opacity-50 border border-red-800 rounded-lg p-3 mb-4">
-                  <p className="text-red-300 text-sm">{verificationError}</p>
-                </div>
-              )}
             </div>
 
-            <div className="flex justify-between">
+            {verificationError && (
+              <div className="mb-4 p-3 bg-red-500 bg-opacity-20 text-red-400 rounded-lg text-sm">
+                {verificationError}
+              </div>
+            )}
+
+            {verificationSent && (
+              <div className="mb-4 p-3 bg-green-500 bg-opacity-20 text-green-400 rounded-lg text-sm">
+                Verification email sent! Check your inbox and click the link.
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:justify-between mt-6">
               <button
                 onClick={() => setShowVerificationModal(false)}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition"
+                className="mb-3 sm:mb-0 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm font-medium"
               >
-                Close
+                Cancel
               </button>
 
-              <div className="flex space-x-2">
-                {!verificationSent ? (
+              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                {verificationSent && (
                   <button
-                    onClick={sendVerificationEmail}
+                    onClick={checkEmailVerified}
+                    className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-sm font-medium flex items-center justify-center"
                     disabled={verificationLoading}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   >
                     {verificationLoading ? (
-                      <>
-                        <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                        Sending...
-                      </>
+                      <RefreshCw className="animate-spin mr-2" size={16} />
                     ) : (
-                      <>
-                        <Mail size={16} className="mr-2" />
-                        Send Verification
-                      </>
+                      <RefreshCw className="mr-2" size={16} />
                     )}
+                    Check Verification Status
                   </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={checkEmailVerified}
-                      disabled={verificationLoading}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                    >
-                      {verificationLoading ? (
-                        <>
-                          <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                          Checking...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw size={16} className="mr-2" />I have
-                          Verified
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={sendVerificationEmail}
-                      disabled={verificationLoading}
-                      className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Resend
-                    </button>
-                  </>
                 )}
+
+                <button
+                  onClick={sendVerificationEmail}
+                  className="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-sm font-medium flex items-center justify-center"
+                  disabled={verificationLoading}
+                >
+                  {verificationLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                  ) : (
+                    <Mail className="mr-2" size={16} />
+                  )}
+                  {verificationSent
+                    ? "Resend Email"
+                    : "Send Verification Email"}
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* OTP Verification Modal */}
+      {/* OTP Verification Modal for Account Deletion */}
       {showOtpModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 px-4">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-white mb-4">
-              Verify Account Deletion
-            </h3>
-            <p className="text-gray-300 mb-4">
-              For security purposes, we need to verify its you before deleting
-              your account.
+          <div className="bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-red-400">Delete Account</h2>
+              <button
+                onClick={() => setShowOtpModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p className="text-gray-300 mb-6">
+              For security, we need to verify its you before deleting your
+              account. A verification code will be sent to your email.
             </p>
 
-            {!otpSent ? (
-              <div>
-                <p className="text-gray-400 mb-4">
-                  Click the button below to send a verification code to your
-                  email: {userData.email}
-                </p>
+            {otpError && (
+              <div className="mb-4 p-3 bg-red-500 bg-opacity-20 text-red-400 rounded-lg text-sm">
+                {otpError}
+              </div>
+            )}
 
-                <div className="flex justify-between mt-6">
-                  <button
-                    onClick={() => setShowOtpModal(false)}
-                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={sendDeleteOTP}
-                    disabled={otpLoading}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                  >
-                    {otpLoading ? (
-                      <>
-                        <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Mail size={16} className="mr-2" />
-                        Send Verification Code
-                      </>
-                    )}
-                  </button>
-                </div>
+            {!otpSent ? (
+              <div className="flex justify-center">
+                <button
+                  onClick={sendDeleteOTP}
+                  className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-sm font-medium flex items-center justify-center"
+                  disabled={otpLoading}
+                >
+                  {otpLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                  ) : (
+                    <Mail className="mr-2" size={16} />
+                  )}
+                  Send Verification Code
+                </button>
               </div>
             ) : (
               <div>
-                <p className="text-gray-400 mb-4">
-                  Enter the 6-digit verification code sent to your email:
-                </p>
+                <div className="mb-4">
+                  <label
+                    htmlFor="otp"
+                    className="block text-sm font-medium text-gray-400 mb-1"
+                  >
+                    Enter 6-digit verification code
+                  </label>
+                  <input
+                    type="text"
+                    id="otp"
+                    value={otpCode}
+                    onChange={(e) =>
+                      setOtpCode(
+                        e.target.value.replace(/[^0-9]/g, "").substring(0, 6)
+                      )
+                    }
+                    maxLength={6}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-widest"
+                    placeholder="000000"
+                  />
+                </div>
 
-                {otpTimer > 0 && (
-                  <div className="flex items-center mb-4 text-gray-400">
-                    <Clock size={16} className="mr-2" />
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center text-gray-400 text-sm">
+                    <Clock size={16} className="mr-1" />
                     <span>Code expires in: {formatTime(otpTimer)}</span>
                   </div>
-                )}
 
-                <input
-                  type="text"
-                  maxLength="6"
-                  value={otpCode}
-                  onChange={(e) =>
-                    setOtpCode(e.target.value.replace(/[^0-9]/g, ""))
-                  }
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-green-500 text-center tracking-widest text-xl"
-                  placeholder="000000"
-                />
-
-                {otpError && (
-                  <div className="bg-red-900 bg-opacity-50 border border-red-800 rounded-lg p-3 mb-4">
-                    <p className="text-red-300 text-sm">{otpError}</p>
-                  </div>
-                )}
+                  <button
+                    onClick={sendDeleteOTP}
+                    className={`text-sm text-blue-400 hover:text-blue-300 disabled:text-gray-500 disabled:hover:text-gray-500`}
+                    disabled={otpResendDisabled || otpLoading}
+                  >
+                    Resend Code
+                  </button>
+                </div>
 
                 <div className="flex justify-between">
-                  <div>
-                    <button
-                      onClick={() => setShowOtpModal(false)}
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={sendDeleteOTP}
-                      disabled={otpLoading || otpResendDisabled}
-                      className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                    >
-                      Resend Code
-                    </button>
-                    <button
-                      onClick={verifyDeleteOTP}
-                      disabled={otpLoading || otpCode.length !== 6}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                    >
-                      {otpLoading ? (
-                        <>
-                          <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                          Verifying...
-                        </>
-                      ) : (
-                        "Delete Account"
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setShowOtpModal(false)}
+                    className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm font-medium"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={verifyDeleteOTP}
+                    className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-sm font-medium flex items-center"
+                    disabled={otpLoading || otpCode.length !== 6}
+                  >
+                    {otpLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Trash2 size={16} className="mr-2" />
+                    )}
+                    Confirm & Delete Account
+                  </button>
                 </div>
               </div>
             )}
