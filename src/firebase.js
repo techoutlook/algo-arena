@@ -2,15 +2,14 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 
-// Your Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyByGaIQUI0PskrMs32RokqBaU6P3utZZJk",
-  authDomain: "algo-arena-50b4f.firebaseapp.com",
-  projectId: "algo-arena-50b4f",
-  storageBucket: "algo-arena-50b4f.firebasestorage.app",
-  messagingSenderId: "46784098077",
-  appId: "1:46784098077:web:8c482ff1260c4ddaa1bbf4",
-  measurementId: "G-F25G3J45DD",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
