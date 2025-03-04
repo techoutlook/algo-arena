@@ -319,7 +319,9 @@ const CodePlayground = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white overflow-hidden p-1 sm:p-2 md:p-4 gap-1 sm:gap-2 md:gap-4">
       {/* Warning Popup */}
-      {showWarning && <WarningPopup onClose={() => setShowWarning(false)} />}
+      {showWarning && !difficultySelected && (
+        <WarningPopup onClose={() => setShowWarning(false)} />
+      )}
 
       {/* Main layout */}
       <div
