@@ -11,14 +11,14 @@ import {
 import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { getStorage, ref, deleteObject } from "firebase/storage";
 import { db } from "../firebase";
-import { 
-  CheckCircle, 
-  Trash2, 
-  AlertCircle, 
-  X, 
-  ShieldAlert, 
-  Loader2, 
-  AlertTriangle 
+import {
+  CheckCircle,
+  Trash2,
+  AlertCircle,
+  X,
+  ShieldAlert,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
 function Profile() {
@@ -44,7 +44,7 @@ function Profile() {
   });
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
   const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
-  
+
   // New state for specific loading states
   const [isVerificationSending, setIsVerificationSending] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -116,10 +116,10 @@ function Profile() {
     try {
       setIsVerificationSending(true);
       await sendEmailVerification(user);
-      
+
       // Simulate a loading effect
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       showNotification("Verification email sent", "success");
       setVerificationModalOpen(false);
     } catch (error) {
@@ -141,7 +141,10 @@ function Profile() {
   const handleDeleteAttempt = () => {
     if (!user.emailVerified) {
       // Show verification warning instead of delete modal
-      showNotification("Please verify your email before deleting account", "error");
+      showNotification(
+        "Please verify your email before deleting account",
+        "error"
+      );
       setVerificationModalOpen(true);
       return;
     }
@@ -169,7 +172,7 @@ function Profile() {
       });
 
       // Simulate a loading effect
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       setEditing(false);
       showNotification("Profile updated", "success");
@@ -186,7 +189,7 @@ function Profile() {
       setIsDeletingAccount(true);
 
       // Simulate a more dramatic loading effect
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Delete profile photo
       if (user.photoURL && user.photoURL.includes("firebase")) {
@@ -296,8 +299,8 @@ function Profile() {
               </h2>
             </div>
             <p className="text-gray-300 text-center mb-4">
-              Are you sure you want to delete your account? 
-              This action cannot be undone and will permanently remove all your data.
+              Are you sure you want to delete your account? This action cannot
+              be undone and will permanently remove all your data.
             </p>
             <div className="flex justify-center space-x-4">
               <button
@@ -427,7 +430,9 @@ function Profile() {
           {!user.emailVerified && (
             <div className="mt-2 text-yellow-500 flex items-center">
               <ShieldAlert className="mr-2" />
-              <span className="text-sm">Email verification required to delete account</span>
+              <span className="text-sm">
+                Email verification required to delete account
+              </span>
             </div>
           )}
         </div>
