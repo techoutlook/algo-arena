@@ -11,7 +11,15 @@ import {
 import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { getStorage, ref, deleteObject } from "firebase/storage";
 import { db } from "../firebase";
-import { CheckCircle, Trash2, AlertCircle, X, ShieldAlert } from "lucide-react";
+import { 
+  CheckCircle, 
+  Trash2, 
+  AlertCircle, 
+  X, 
+  ShieldAlert, 
+  Loader2, 
+  AlertTriangle 
+} from "lucide-react";
 
 function Profile() {
   const auth = getAuth();
@@ -35,6 +43,12 @@ function Profile() {
     type: "",
   });
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
+  const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
+  
+  // New state for specific loading states
+  const [isVerificationSending, setIsVerificationSending] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Authentication and user data loading
   useEffect(() => {
@@ -100,12 +114,19 @@ function Profile() {
     if (!user) return;
 
     try {
+      setIsVerificationSending(true);
       await sendEmailVerification(user);
+      
+      // Simulate a loading effect
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
       showNotification("Verification email sent", "success");
       setVerificationModalOpen(false);
     } catch (error) {
       console.error("Error sending verification email:", error);
       showNotification("Failed to send verification email", "error");
+    } finally {
+      setIsVerificationSending(false);
     }
   };
 
@@ -119,11 +140,13 @@ function Profile() {
 
   const handleDeleteAttempt = () => {
     if (!user.emailVerified) {
+      // Show verification warning instead of delete modal
+      showNotification("Please verify your email before deleting account", "error");
       setVerificationModalOpen(true);
       return;
     }
-    // Implement delete logic here
-    deleteUserAccount();
+    // Open delete confirmation modal
+    setDeleteConfirmModalOpen(true);
   };
 
   const handleInputChange = (e) => {
@@ -133,7 +156,7 @@ function Profile() {
 
   const saveProfile = async () => {
     try {
-      setLoading(true);
+      setIsSavingProfile(true);
       await updateProfile(user, { displayName: userData.displayName });
 
       const userRef = doc(db, "users", user.uid);
@@ -145,19 +168,25 @@ function Profile() {
         githubLink: userData.githubLink,
       });
 
+      // Simulate a loading effect
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       setEditing(false);
       showNotification("Profile updated", "success");
     } catch (error) {
       console.error("Error updating profile:", error);
       showNotification("Error updating profile", "error");
     } finally {
-      setLoading(false);
+      setIsSavingProfile(false);
     }
   };
 
-  const deleteUserAccount = async () => {
+  const confirmDeleteAccount = async () => {
     try {
-      setLoading(true);
+      setIsDeletingAccount(true);
+
+      // Simulate a more dramatic loading effect
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Delete profile photo
       if (user.photoURL && user.photoURL.includes("firebase")) {
@@ -175,7 +204,8 @@ function Profile() {
       console.error("Error deleting account:", error);
       showNotification("Error deleting account", "error");
     } finally {
-      setLoading(false);
+      setIsDeletingAccount(false);
+      setDeleteConfirmModalOpen(false);
     }
   };
 
@@ -192,11 +222,11 @@ function Profile() {
       {/* Notification */}
       {notification.show && (
         <div
-          className={`fixed top-5 right-5 p-4 rounded-lg ${
+          className={`fixed top-5 right-5 p-4 rounded-lg z-50 ${
             notification.type === "success" ? "bg-green-500" : "bg-red-500"
           }`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between space-x-4">
             {notification.type === "success" ? (
               <CheckCircle />
             ) : (
@@ -232,14 +262,66 @@ function Profile() {
               <button
                 onClick={() => setVerificationModalOpen(false)}
                 className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
+                disabled={isVerificationSending}
               >
                 Close
               </button>
               <button
                 onClick={sendVerificationEmail}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center"
+                disabled={isVerificationSending}
               >
-                Send Verification Email
+                {isVerificationSending ? (
+                  <>
+                    <Loader2 className="mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Verification Email"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <div className="flex items-center justify-center mb-4">
+              <AlertTriangle className="text-red-500 mr-2" size={24} />
+              <h2 className="text-xl font-bold text-red-500">
+                Confirm Account Deletion
+              </h2>
+            </div>
+            <p className="text-gray-300 text-center mb-4">
+              Are you sure you want to delete your account? 
+              This action cannot be undone and will permanently remove all your data.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => setDeleteConfirmModalOpen(false)}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
+                disabled={isDeletingAccount}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteAccount}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center"
+                disabled={isDeletingAccount}
+              >
+                {isDeletingAccount ? (
+                  <>
+                    <Loader2 className="mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="inline mr-2" /> Confirm Delete
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -271,9 +353,17 @@ function Profile() {
             {editing && (
               <button
                 onClick={saveProfile}
-                className="bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-lg"
+                className="bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-lg flex items-center"
+                disabled={isSavingProfile}
               >
-                Save
+                {isSavingProfile ? (
+                  <>
+                    <Loader2 className="mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
               </button>
             )}
             <button
@@ -325,16 +415,21 @@ function Profile() {
           ))}
         </div>
 
-        {/* Delete Account */}
+        {/* Delete Account Section */}
         <div className="mt-8 border border-red-600 p-4 rounded-lg">
           <h3 className="text-red-500 mb-2">Delete Account</h3>
           <button
             onClick={handleDeleteAttempt}
-            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg"
-            disabled={!user.emailVerified}
+            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg flex items-center"
           >
             <Trash2 className="inline mr-2" /> Delete Permanently
           </button>
+          {!user.emailVerified && (
+            <div className="mt-2 text-yellow-500 flex items-center">
+              <ShieldAlert className="mr-2" />
+              <span className="text-sm">Email verification required to delete account</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
