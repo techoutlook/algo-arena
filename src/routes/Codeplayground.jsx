@@ -147,16 +147,48 @@ LanguageSelector.propTypes = {
 };
 
 const CodePlayground = () => {
-  const [code, setCode] = useState(LANGUAGE_TEMPLATES.javascript);
+  const [code, setCode] = useState(() => {
+    return localStorage.getItem("savedCode") || LANGUAGE_TEMPLATES.javascript;
+  });
   const [output, setOutput] = useState("Output will appear here...");
   const [fullScreenPanel, setFullScreenPanel] = useState(null);
   const [language, setLanguage] = useState("javascript");
   const [showWarning, setShowWarning] = useState(false);
-  const [difficultySelected, setDifficultySelected] = useState(false);
+
+  // Modify difficulty state to check local storage
+  const [difficultySelected, setDifficultySelected] = useState(() => {
+    const storedDifficulty = localStorage.getItem("selectedDifficulty");
+    return !!storedDifficulty;
+  });
+
   const [editorReadOnly, setEditorReadOnly] = useState(false);
   const [orientation, setOrientation] = useState("vertical");
+
+  // Update to load from local storage
+  const [currentQuestion, setCurrentQuestion] = useState(() => {
+    const storedQuestion = localStorage.getItem("currentQuestion");
+    return storedQuestion ? JSON.parse(storedQuestion) : null;
+  });
+
+  // Ensure difficulty is loaded from local storage
+  const [selectedDifficulty, setSelectedDifficulty] = useState(() => {
+    return localStorage.getItem("selectedDifficulty") || null;
+  });
+
   const editorRef = useRef(null);
   const [pyodide, setPyodide] = useState(null);
+
+  // Save code to local storage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("savedCode", code);
+  }, [code]);
+
+  // Save current question to local storage
+  useEffect(() => {
+    if (currentQuestion) {
+      localStorage.setItem("currentQuestion", JSON.stringify(currentQuestion));
+    }
+  }, [currentQuestion]);
 
   // Detect screen size and set orientation
   useEffect(() => {
@@ -208,10 +240,42 @@ const CodePlayground = () => {
     });
   };
 
-  // Handle difficulty selection from question panel
-  const handleDifficultySelected = () => {
+  const handleDifficultySelected = (difficulty) => {
+    // Persist difficulty in local storage
+    localStorage.setItem("selectedDifficulty", difficulty);
+
+    setSelectedDifficulty(difficulty);
     setDifficultySelected(true);
     setEditorReadOnly(false);
+
+    // Clear any previous question state
+    setCurrentQuestion(null);
+    localStorage.removeItem("currentQuestion");
+  };
+
+  // New method to handle next question
+  const handleNextQuestion = (nextQuestion) => {
+    setCurrentQuestion(nextQuestion);
+
+    // Optional: Reset code when moving to next question
+    setCode(LANGUAGE_TEMPLATES[language]);
+    setOutput("Output will appear here...");
+  };
+
+  // New method to handle exiting challenge
+  const handleExitChallenge = () => {
+    // Reset local storage
+    localStorage.removeItem("savedCode");
+    localStorage.removeItem("selectedDifficulty");
+    localStorage.removeItem("currentQuestion");
+
+    // Reset component state
+    setCode(LANGUAGE_TEMPLATES.javascript);
+    setDifficultySelected(false);
+    setEditorReadOnly(true);
+    setCurrentQuestion(null);
+    setSelectedDifficulty(null);
+    setOutput("Output will appear here...");
   };
 
   // Adjust editor layout when container size changes
@@ -427,10 +491,13 @@ const CodePlayground = () => {
                 : "w-full h-2/5"
             } overflow-auto`}
           >
-            {/* Use the enhanced QuestionPanel component with difficulty selection callback */}
             <QuestionPanel
               onToggleFullScreen={toggleFullScreen}
               onDifficultySelected={handleDifficultySelected}
+              onNextQuestion={handleNextQuestion}
+              onExitChallenge={handleExitChallenge}
+              initialDifficulty={selectedDifficulty}
+              initialQuestion={currentQuestion}
             />
           </div>
         )}
