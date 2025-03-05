@@ -4,8 +4,6 @@ import {
   TrendingUp,
   Award,
   AlignLeft,
-  ChevronDown,
-  ChevronUp,
   Maximize,
   Minimize,
 } from "lucide-react";
@@ -54,13 +52,6 @@ const SAMPLE_QUESTIONS = {
     example: `Input: nums = [2,7,11,15], target = 9
 Output: [0,1]
 Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].`,
-    constraints: [
-      "2 <= nums.length <= 10^4",
-      "-10^9 <= nums[i] <= 10^9",
-      "-10^9 <= target <= 10^9",
-    ],
-    expectedTime: "O(n)",
-    expectedSpace: "O(n)",
   },
   medium: {
     title: "Add Two Numbers",
@@ -69,13 +60,6 @@ Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].`,
     example: `Input: l1 = [2,4,3], l2 = [5,6,4]
 Output: [7,0,8]
 Explanation: 342 + 465 = 807.`,
-    constraints: [
-      "The number of nodes in each linked list is in the range [1, 100]",
-      "0 <= Node.val <= 9",
-      "It is guaranteed that the list represents a number that does not have leading zeros.",
-    ],
-    expectedTime: "O(max(n,m))",
-    expectedSpace: "O(max(n,m))",
   },
   hard: {
     title: "Median of Two Sorted Arrays",
@@ -84,15 +68,6 @@ Explanation: 342 + 465 = 807.`,
     example: `Input: nums1 = [1,3], nums2 = [2]
 Output: 2.00000
 Explanation: Merged array = [1,2,3] and median is 2.`,
-    constraints: [
-      "nums1.length == m",
-      "nums2.length == n",
-      "0 <= m <= 1000",
-      "0 <= n <= 1000",
-      "1 <= m + n <= 2000",
-    ],
-    expectedTime: "O(log(m+n))",
-    expectedSpace: "O(1)",
   },
 };
 
@@ -145,19 +120,10 @@ DifficultyCard.propTypes = {
 
 // Enhanced Question content
 const QuestionContent = memo(({ question, difficulty }) => {
-  const [showConstraints, setShowConstraints] = useState(false);
-
   const { label, textColor } = DIFFICULTY_LEVELS.find(
     (d) => d.value === difficulty
   );
-  const {
-    title,
-    description,
-    example,
-    constraints,
-    expectedTime,
-    expectedSpace,
-  } = question;
+  const { title, description, example } = question;
 
   return (
     <div className="p-2">
@@ -180,40 +146,6 @@ const QuestionContent = memo(({ question, difficulty }) => {
           <pre className="bg-gray-900 p-2 sm:p-3 rounded-lg overflow-x-auto whitespace-pre-wrap text-xs sm:text-sm">
             {example}
           </pre>
-        </div>
-
-        <div className="mb-2">
-          <button
-            onClick={() => setShowConstraints(!showConstraints)}
-            className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors text-xs sm:text-sm"
-          >
-            <span>Constraints & Requirements</span>
-            {showConstraints ? (
-              <ChevronUp size={14} className="sm:w-4 sm:h-4" />
-            ) : (
-              <ChevronDown size={14} className="sm:w-4 sm:h-4" />
-            )}
-          </button>
-
-          {showConstraints && (
-            <div className="mt-2 ml-2 text-gray-400 text-xs sm:text-sm">
-              <ul className="list-disc pl-4 sm:pl-5 space-y-0.5 sm:space-y-1">
-                {constraints.map((constraint, index) => (
-                  <li key={index}>{constraint}</li>
-                ))}
-              </ul>
-              <div className="mt-2">
-                <p>
-                  Expected Time Complexity:{" "}
-                  <span className="font-mono">{expectedTime}</span>
-                </p>
-                <p>
-                  Expected Space Complexity:{" "}
-                  <span className="font-mono">{expectedSpace}</span>
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

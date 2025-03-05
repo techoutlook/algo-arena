@@ -9,27 +9,17 @@ import {
   X,
 } from "lucide-react";
 import PropTypes from "prop-types";
-import QuestionPanel from "./QuestionPanel"; // Import the enhanced QuestionPanel
+import QuestionPanel from "./QuestionPanel";
 
 // Language configuration
 const SUPPORTED_LANGUAGES = [
   { value: "javascript", label: "JavaScript" },
-  { value: "typescript", label: "TypeScript" },
   { value: "python", label: "Python" },
-  { value: "java", label: "Java" },
-  { value: "csharp", label: "C#" },
-  { value: "cpp", label: "C++" },
 ];
 
 const LANGUAGE_TEMPLATES = {
   javascript: "// Start coding in JavaScript...",
-  typescript:
-    "// Start coding in TypeScript...\nfunction example(): void {\n  \n}",
   python: "# Start coding in Python...",
-  java: "public class Main {\n  public static void main(String[] args) {\n    // Start coding in Java...\n  }\n}",
-  csharp:
-    "using System;\n\nclass Program {\n  static void Main() {\n    // Start coding in C#...\n  }\n}",
-  cpp: "#include <iostream>\n\nint main() {\n  // Start coding in C++...\n  return 0;\n}",
 };
 
 // Warning Popup Component
@@ -291,8 +281,6 @@ const CodePlayground = () => {
         await pyodide.runPythonAsync(code);
         const output = pyodide.runPython("sys.stdout.getvalue()");
         setOutput(output);
-      } else {
-        setOutput(`[${language.toUpperCase()}] Execution not supported yet.`);
       }
     } catch (error) {
       setOutput(`Error: ${error.message}`);
