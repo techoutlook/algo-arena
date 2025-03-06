@@ -8,6 +8,8 @@ import {
   Minimize,
 } from "lucide-react";
 import PropTypes from "prop-types";
+import { db } from "../firebase.js";
+import { collection, doc, getDoc } from "firebase/firestore";
 
 // Difficulty levels
 const DIFFICULTY_LEVELS = [
@@ -42,62 +44,6 @@ const DIFFICULTY_LEVELS = [
       "Advanced problems. Tests in-depth knowledge and optimization skills.",
   },
 ];
-
-// Sample questions for each difficulty level
-const SAMPLE_QUESTIONS = {
-  easy: [
-    {
-      title: "Two Sum",
-      description:
-        "Given an array of integers and a target, return indices of two numbers that add up to the target.",
-      example: `Input: nums = [2,7,11,15], target = 9
-Output: [0,1]
-Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].`,
-    },
-    {
-      title: "Reverse String",
-      description:
-        "Write a function that reverses a string. The input string is given as an array of characters.",
-      example: `Input: ["h","e","l","l","o"]
-Output: ["o","l","l","e","h"]`,
-    },
-  ],
-  medium: [
-    {
-      title: "Add Two Numbers",
-      description:
-        "You are given two non-empty linked lists representing two non-negative integers. The digits are stored in reverse order, and each node contains a single digit. Add the two numbers and return the sum as a linked list.",
-      example: `Input: l1 = [2,4,3], l2 = [5,6,4]
-Output: [7,0,8]
-Explanation: 342 + 465 = 807.`,
-    },
-    {
-      title: "Longest Substring Without Repeating Characters",
-      description:
-        "Given a string, find the length of the longest substring without repeating characters.",
-      example: `Input: "abcabcbb"
-Output: 3
-Explanation: The longest substring is "abc", with length 3.`,
-    },
-  ],
-  hard: [
-    {
-      title: "Median of Two Sorted Arrays",
-      description:
-        "Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays.",
-      example: `Input: nums1 = [1,3], nums2 = [2]
-Output: 2.00000
-Explanation: Merged array = [1,2,3] and median is 2.`,
-    },
-    {
-      title: "Merge k Sorted Lists",
-      description:
-        "Merge k sorted linked lists and return it as a sorted list.",
-      example: `Input: lists = [[1,4,5],[1,3,4],[2,6]]
-Output: [1,1,2,3,4,4,5,6]`,
-    },
-  ],
-};
 
 // Redesigned Difficulty Card
 const DifficultyCard = ({ difficulty, isSelected, onSelect }) => {
@@ -215,22 +161,70 @@ const QuestionPanel = ({
   const [showSelection, setShowSelection] = useState(!initialDifficulty);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(initialQuestion);
+  const [questions, setQuestions] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch all questions from Firestore on component mount
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const questionsCollection = collection(db, "Questions");
+
+        const fetchDifficultyQuestions = async (difficulty) => {
+          const docRef = doc(questionsCollection, difficulty);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Convert the document data object to an array of questions
+            return Object.keys(data).map((key) => ({
+              id: key,
+              title: data[key].question || data[key].title,
+              description: data[key].description,
+              example: data[key].example,
+            }));
+          }
+          return [];
+        };
+
+        const easy = await fetchDifficultyQuestions("Easy");
+        const medium = await fetchDifficultyQuestions("Medium");
+        const hard = await fetchDifficultyQuestions("Hard");
+
+        setQuestions({
+          easy,
+          medium,
+          hard,
+        });
+      } catch (err) {
+        console.error("Error fetching questions:", err);
+        setError("Failed to load questions. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
 
   // Effect to handle initial difficulty and question
   useEffect(() => {
-    if (initialDifficulty) {
+    if (initialDifficulty && questions[initialDifficulty]?.length > 0) {
       setSelectedDifficulty(initialDifficulty);
       setShowSelection(false);
 
       // If no initial question, select first question of the difficulty
       if (!initialQuestion) {
-        const firstQuestion = SAMPLE_QUESTIONS[initialDifficulty][0];
+        const firstQuestion = questions[initialDifficulty][0];
         setCurrentQuestion(firstQuestion);
         setCurrentQuestionIndex(0);
       } else {
         // Find index of initial question
-        const questions = SAMPLE_QUESTIONS[initialDifficulty];
-        const index = questions.findIndex(
+        const difficultyQuestions = questions[initialDifficulty];
+        const index = difficultyQuestions.findIndex(
           (q) => q.title === initialQuestion.title
         );
         setCurrentQuestionIndex(index !== -1 ? index : 0);
@@ -241,20 +235,24 @@ const QuestionPanel = ({
         onDifficultySelected(initialDifficulty);
       }
     }
-  }, [initialDifficulty, initialQuestion, onDifficultySelected]);
+  }, [initialDifficulty, initialQuestion, onDifficultySelected, questions]);
 
   const handleSelectDifficulty = (difficulty) => {
-    setSelectedDifficulty(difficulty);
-    setShowSelection(false);
+    if (questions[difficulty]?.length > 0) {
+      setSelectedDifficulty(difficulty);
+      setShowSelection(false);
 
-    // Select first question of the difficulty
-    const firstQuestion = SAMPLE_QUESTIONS[difficulty][0];
-    setCurrentQuestion(firstQuestion);
-    setCurrentQuestionIndex(0);
+      // Select first question of the difficulty
+      const firstQuestion = questions[difficulty][0];
+      setCurrentQuestion(firstQuestion);
+      setCurrentQuestionIndex(0);
 
-    // Notify parent component
-    if (onDifficultySelected) {
-      onDifficultySelected(difficulty);
+      // Notify parent component
+      if (onDifficultySelected) {
+        onDifficultySelected(difficulty);
+      }
+    } else {
+      setError(`No questions available for ${difficulty} difficulty.`);
     }
   };
 
@@ -271,16 +269,18 @@ const QuestionPanel = ({
   };
 
   const handleNextQuestion = () => {
-    const questions = SAMPLE_QUESTIONS[selectedDifficulty];
-    const nextIndex = (currentQuestionIndex + 1) % questions.length;
-    const nextQuestion = questions[nextIndex];
+    if (selectedDifficulty && questions[selectedDifficulty]?.length > 0) {
+      const difficultyQuestions = questions[selectedDifficulty];
+      const nextIndex = (currentQuestionIndex + 1) % difficultyQuestions.length;
+      const nextQuestion = difficultyQuestions[nextIndex];
 
-    setCurrentQuestionIndex(nextIndex);
-    setCurrentQuestion(nextQuestion);
+      setCurrentQuestionIndex(nextIndex);
+      setCurrentQuestion(nextQuestion);
 
-    // Notify parent component
-    if (onNextQuestion) {
-      onNextQuestion(nextQuestion);
+      // Notify parent component
+      if (onNextQuestion) {
+        onNextQuestion(nextQuestion);
+      }
     }
   };
 
@@ -325,7 +325,21 @@ const QuestionPanel = ({
       </div>
 
       <div className="flex-grow overflow-auto">
-        {showSelection ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-full">
+            <p className="text-gray-400">Loading questions...</p>
+          </div>
+        ) : error ? (
+          <div className="p-4 text-center text-red-400">
+            <p>{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="mt-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+            >
+              Dismiss
+            </button>
+          </div>
+        ) : showSelection ? (
           <div className="p-1 sm:p-2">
             <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-6 text-center">
               Select Difficulty Level
