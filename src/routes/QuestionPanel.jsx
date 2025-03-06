@@ -209,6 +209,7 @@ const QuestionPanel = ({
   const [error, setError] = useState(null);
   const [solvedQuestions, setSolvedQuestions] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [allSolved, setAllSolved] = useState(false);
 
   // Fetch all questions from Firestore and user's solved questions on component mount
   useEffect(() => {
@@ -276,6 +277,8 @@ const QuestionPanel = ({
     if (initialDifficulty && questions[initialDifficulty]?.length > 0) {
       setSelectedDifficulty(initialDifficulty);
       setShowSelection(false);
+      setLoading(true); // Show loading while checking
+      setAllSolved(false);
 
       const difficultyQuestions = questions[initialDifficulty];
 
@@ -289,7 +292,8 @@ const QuestionPanel = ({
         setCurrentQuestionIndex(firstUnsolvedIndex);
         setCurrentQuestion(difficultyQuestions[firstUnsolvedIndex]);
       } else {
-        // All questions are solved, just use the first one
+        // All questions are solved
+        setAllSolved(true);
         setCurrentQuestionIndex(0);
         setCurrentQuestion(difficultyQuestions[0]);
       }
@@ -298,6 +302,8 @@ const QuestionPanel = ({
       if (onDifficultySelected) {
         onDifficultySelected(initialDifficulty);
       }
+
+      setLoading(false); // Hide loading after question is found
     }
   }, [initialDifficulty, questions, solvedQuestions, onDifficultySelected]);
 
@@ -334,6 +340,8 @@ const QuestionPanel = ({
 
   const handleNextQuestion = () => {
     if (selectedDifficulty && questions[selectedDifficulty]?.length > 0) {
+      setLoading(true); // Show loading while finding next unsolved question
+
       const difficultyQuestions = questions[selectedDifficulty];
 
       // Try to find the next unsolved question
@@ -341,13 +349,25 @@ const QuestionPanel = ({
       const startIndex = nextIndex; // Save where we started to avoid infinite loop
 
       // Keep looking for an unsolved question, but don't loop forever
-      while (solvedQuestions.includes(difficultyQuestions[nextIndex].id)) {
+      let foundUnsolved = false;
+      while (!foundUnsolved) {
+        if (!solvedQuestions.includes(difficultyQuestions[nextIndex].id)) {
+          foundUnsolved = true;
+          break;
+        }
+
         nextIndex = (nextIndex + 1) % difficultyQuestions.length;
 
-        // If we've checked all questions and they're all solved, just use the next one
+        // If we've checked all questions and they're all solved, break
         if (nextIndex === startIndex) {
           break;
         }
+      }
+
+      if (foundUnsolved) {
+        setAllSolved(false);
+      } else {
+        setAllSolved(true);
       }
 
       const nextQuestion = difficultyQuestions[nextIndex];
@@ -358,6 +378,8 @@ const QuestionPanel = ({
       if (onNextQuestion) {
         onNextQuestion(nextQuestion);
       }
+
+      setLoading(false); // Hide loading after question is found
     }
   };
 
@@ -437,12 +459,14 @@ const QuestionPanel = ({
                 >
                   Exit
                 </button>
-                <button
-                  onClick={handleNextQuestion}
-                  className="px-2 py-1 sm:px-4 sm:py-1 bg-blue-600 hover:bg-blue-700 rounded font-medium text-xs sm:text-sm transition-colors"
-                >
-                  Next
-                </button>
+                {!allSolved && (
+                  <button
+                    onClick={handleNextQuestion}
+                    className="px-2 py-1 sm:px-4 sm:py-1 bg-blue-600 hover:bg-blue-700 rounded font-medium text-xs sm:text-sm transition-colors"
+                  >
+                    Next
+                  </button>
+                )}
               </>
             )}
             <button
@@ -499,6 +523,24 @@ const QuestionPanel = ({
                 <li>Start with a brute force approach, then refine</li>
               </ul>
             </div>
+          </div>
+        ) : allSolved ? (
+          <div className="flex flex-col justify-center items-center h-full p-4 text-center">
+            <div className="text-2xl text-green-500 mb-4">
+              <Check size={48} />
+            </div>
+            <h2 className="text-xl font-bold mb-3 text-green-400">
+              Great! All available questions are solved.
+            </h2>
+            <p className="text-gray-400 mb-6">
+              You have completed all questions in this difficulty level.
+            </p>
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-medium text-sm transition-colors"
+            >
+              Choose Another Difficulty
+            </button>
           </div>
         ) : (
           <QuestionContent
