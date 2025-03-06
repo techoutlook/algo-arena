@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import PropTypes from "prop-types";
 import QuestionPanel from "./QuestionPanel";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+const auth = getAuth();
 
 // Language configuration
 const SUPPORTED_LANGUAGES = [
@@ -177,6 +179,21 @@ const CodePlayground = () => {
 
   const editorRef = useRef(null);
   const [pyodide, setPyodide] = useState(null);
+
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Use Firebase auth to get the current user
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Save code to local storage whenever it changes
   useEffect(() => {
@@ -498,6 +515,7 @@ const CodePlayground = () => {
               onExitChallenge={handleExitChallenge}
               initialDifficulty={selectedDifficulty}
               initialQuestion={currentQuestion}
+              userId={currentUser?.uid}
             />
           </div>
         )}

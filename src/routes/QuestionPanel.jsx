@@ -5,11 +5,19 @@ import {
   Award,
   AlignLeft,
   Maximize,
-  Minimize,
+  Check,
+  Save,
 } from "lucide-react";
 import PropTypes from "prop-types";
-import { db } from "../firebase.js";
-import { collection, doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import {
+  collection,
+  doc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  setDoc,
+} from "firebase/firestore";
 
 // Difficulty levels
 const DIFFICULTY_LEVELS = [
@@ -92,60 +100,90 @@ DifficultyCard.propTypes = {
   onSelect: PropTypes.func.isRequired,
 };
 
-// Modify QuestionContent to handle null questions
-const QuestionContent = memo(({ question, difficulty }) => {
-  // If no question is provided, return null or a placeholder
-  if (!question) {
+// Modify QuestionContent to handle null questions and solved status
+const QuestionContent = memo(
+  ({ question, difficulty, isSolved, onMarkSolved, isSubmitting }) => {
+    // If no question is provided, return null or a placeholder
+    if (!question) {
+      return (
+        <div className="p-2 text-center text-gray-400">
+          No question available. Please select a difficulty level.
+        </div>
+      );
+    }
+
+    const { label, textColor } =
+      DIFFICULTY_LEVELS.find((d) => d.value === difficulty) || {};
+
+    const { title, description, example } = question;
+
     return (
-      <div className="p-2 text-center text-gray-400">
-        No question available. Please select a difficulty level.
+      <div className="p-2">
+        <div className="flex items-center justify-between gap-1 sm:gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            {label && (
+              <span
+                className={`px-1 py-0.5 sm:px-2 sm:py-1 rounded-md ${textColor} bg-opacity-20 text-xs sm:text-sm font-medium`}
+              >
+                {label}
+              </span>
+            )}
+            <h2 className="text-base sm:text-xl font-bold">{title}</h2>
+          </div>
+
+          <button
+            onClick={onMarkSolved}
+            disabled={isSolved || isSubmitting}
+            className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+              isSolved
+                ? "bg-green-700 text-white cursor-not-allowed"
+                : isSubmitting
+                ? "bg-gray-600 text-gray-300 cursor-wait"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+          >
+            {isSolved ? (
+              <>
+                <Check size={14} className="sm:w-4 sm:h-4" /> Solved
+              </>
+            ) : (
+              <>
+                <Save size={14} className="sm:w-4 sm:h-4" /> Mark as Solved
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="prose prose-invert max-w-none">
+          <p className="mb-3 sm:mb-4 text-sm sm:text-base">{description}</p>
+
+          <div className="mb-3 sm:mb-4">
+            <h3 className="text-sm sm:text-lg font-semibold mb-1 sm:mb-2">
+              Example:
+            </h3>
+            <pre className="bg-gray-900 p-2 sm:p-3 rounded-lg overflow-x-auto whitespace-pre-wrap text-xs sm:text-sm">
+              {example}
+            </pre>
+          </div>
+        </div>
       </div>
     );
   }
-
-  const { label, textColor } =
-    DIFFICULTY_LEVELS.find((d) => d.value === difficulty) || {};
-
-  const { title, description, example } = question;
-
-  return (
-    <div className="p-2">
-      <div className="flex items-center gap-1 sm:gap-2 mb-2">
-        {label && (
-          <span
-            className={`px-1 py-0.5 sm:px-2 sm:py-1 rounded-md ${textColor} bg-opacity-20 text-xs sm:text-sm font-medium`}
-          >
-            {label}
-          </span>
-        )}
-        <h2 className="text-base sm:text-xl font-bold">{title}</h2>
-      </div>
-
-      <div className="prose prose-invert max-w-none">
-        <p className="mb-3 sm:mb-4 text-sm sm:text-base">{description}</p>
-
-        <div className="mb-3 sm:mb-4">
-          <h3 className="text-sm sm:text-lg font-semibold mb-1 sm:mb-2">
-            Example:
-          </h3>
-          <pre className="bg-gray-900 p-2 sm:p-3 rounded-lg overflow-x-auto whitespace-pre-wrap text-xs sm:text-sm">
-            {example}
-          </pre>
-        </div>
-      </div>
-    </div>
-  );
-});
+);
 
 QuestionContent.displayName = "QuestionContent";
 
 QuestionContent.propTypes = {
   question: PropTypes.shape({
+    id: PropTypes.string,
     title: PropTypes.string,
     description: PropTypes.string,
     example: PropTypes.string,
   }),
   difficulty: PropTypes.string.isRequired,
+  isSolved: PropTypes.bool,
+  onMarkSolved: PropTypes.func.isRequired,
+  isSubmitting: PropTypes.bool,
 };
 
 const QuestionPanel = ({
@@ -155,22 +193,30 @@ const QuestionPanel = ({
   onExitChallenge,
   initialDifficulty,
   initialQuestion,
+  userId, // Add userId prop for tracking solved questions
 }) => {
   const [selectedDifficulty, setSelectedDifficulty] =
     useState(initialDifficulty);
   const [showSelection, setShowSelection] = useState(!initialDifficulty);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(initialQuestion);
-  const [questions, setQuestions] = useState({});
+  const [questions, setQuestions] = useState({
+    easy: [],
+    medium: [],
+    hard: [],
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [solvedQuestions, setSolvedQuestions] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch all questions from Firestore on component mount
+  // Fetch all questions from Firestore and user's solved questions on component mount
   useEffect(() => {
-    const fetchQuestions = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
+        // Fetch questions
         const questionsCollection = collection(db, "Questions");
 
         const fetchDifficultyQuestions = async (difficulty) => {
@@ -190,25 +236,40 @@ const QuestionPanel = ({
           return [];
         };
 
-        const easy = await fetchDifficultyQuestions("Easy");
-        const medium = await fetchDifficultyQuestions("Medium");
-        const hard = await fetchDifficultyQuestions("Hard");
+        const [easy, medium, hard] = await Promise.all([
+          fetchDifficultyQuestions("Easy"),
+          fetchDifficultyQuestions("Medium"),
+          fetchDifficultyQuestions("Hard"),
+        ]);
 
         setQuestions({
           easy,
           medium,
           hard,
         });
+
+        // Fetch user's solved questions if userId is provided
+        if (userId) {
+          const userDocRef = doc(db, "users", userId);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            if (userData.solvedQuestions) {
+              setSolvedQuestions(userData.solvedQuestions);
+            }
+          }
+        }
       } catch (err) {
-        console.error("Error fetching questions:", err);
+        console.error("Error fetching data:", err);
         setError("Failed to load questions. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchQuestions();
-  }, []);
+    fetchData();
+  }, [userId]);
 
   // Effect to handle initial difficulty and question
   useEffect(() => {
@@ -225,9 +286,12 @@ const QuestionPanel = ({
         // Find index of initial question
         const difficultyQuestions = questions[initialDifficulty];
         const index = difficultyQuestions.findIndex(
-          (q) => q.title === initialQuestion.title
+          (q) => q.id === (initialQuestion.id || "")
         );
         setCurrentQuestionIndex(index !== -1 ? index : 0);
+        setCurrentQuestion(
+          index !== -1 ? difficultyQuestions[index] : difficultyQuestions[0]
+        );
       }
 
       // Ensure difficulty is set in parent component
@@ -284,6 +348,58 @@ const QuestionPanel = ({
     }
   };
 
+  // Check if current question is solved
+  const isQuestionSolved = () => {
+    return currentQuestion && solvedQuestions.includes(currentQuestion.id);
+  };
+
+  // Mark current question as solved
+  const handleMarkSolved = async () => {
+    if (!userId) {
+      setError(
+        "You need to be logged in to save your progress. Please sign in."
+      );
+      return;
+    }
+
+    if (!currentQuestion || isQuestionSolved() || isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const userDocRef = doc(db, "users", userId);
+
+      // Check if user document exists
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        // Update existing document with the new solved question
+        await updateDoc(userDocRef, {
+          solvedQuestions: arrayUnion(currentQuestion.id),
+        });
+        console.log("Question marked as solved (updated):", currentQuestion.id);
+      } else {
+        // Create new user document with solved questions array
+        await setDoc(userDocRef, {
+          solvedQuestions: [currentQuestion.id],
+        });
+        console.log(
+          "Question marked as solved (new user doc):",
+          currentQuestion.id
+        );
+      }
+
+      // Update local state
+      setSolvedQuestions((prev) => [...prev, currentQuestion.id]);
+    } catch (err) {
+      console.error("Error marking question as solved:", err);
+      setError("Failed to save progress. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="p-1 sm:p-2 md:p-3 flex flex-col h-full">
       <div className="sticky top-0 bg-gray-800 z-10">
@@ -291,6 +407,13 @@ const QuestionPanel = ({
           <div className="flex items-center gap-1 sm:gap-2">
             <FileText size={16} className="sm:w-5 sm:h-5" />
             <span className="font-medium text-sm sm:text-base">Question</span>
+            {!showSelection &&
+              currentQuestion &&
+              solvedQuestions.length > 0 && (
+                <span className="text-xs bg-gray-700 px-2 py-0.5 rounded-full ml-2">
+                  Solved {solvedQuestions.length} questions
+                </span>
+              )}
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             {!showSelection && (
@@ -310,15 +433,11 @@ const QuestionPanel = ({
               </>
             )}
             <button
-              onClick={() => onToggleFullScreen("question")}
+              onClick={onToggleFullScreen}
               className="p-1 hover:bg-gray-700 rounded transition-colors"
               aria-label="Toggle question fullscreen"
             >
-              {onToggleFullScreen.activePanel === "question" ? (
-                <Minimize size={16} className="sm:w-5 sm:h-5" />
-              ) : (
-                <Maximize size={16} className="sm:w-5 sm:h-5" />
-              )}
+              <Maximize size={16} className="sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -372,6 +491,9 @@ const QuestionPanel = ({
           <QuestionContent
             question={currentQuestion}
             difficulty={selectedDifficulty}
+            isSolved={isQuestionSolved()}
+            onMarkSolved={handleMarkSolved}
+            isSubmitting={isSubmitting}
           />
         )}
       </div>
@@ -380,17 +502,19 @@ const QuestionPanel = ({
 };
 
 QuestionPanel.propTypes = {
-  onToggleFullScreen: PropTypes.object.isRequired,
+  onToggleFullScreen: PropTypes.func.isRequired,
   onDifficultySelected: PropTypes.func,
   onNextQuestion: PropTypes.func,
   onExitChallenge: PropTypes.func,
   initialDifficulty: PropTypes.string,
   initialQuestion: PropTypes.object,
+  userId: PropTypes.string, // Add userId prop
 };
 
 QuestionPanel.defaultProps = {
   initialDifficulty: null,
   initialQuestion: null,
+  userId: null,
 };
 
 export default QuestionPanel;
