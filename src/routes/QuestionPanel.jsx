@@ -277,21 +277,21 @@ const QuestionPanel = ({
       setSelectedDifficulty(initialDifficulty);
       setShowSelection(false);
 
-      // If no initial question, select first question of the difficulty
-      if (!initialQuestion) {
-        const firstQuestion = questions[initialDifficulty][0];
-        setCurrentQuestion(firstQuestion);
-        setCurrentQuestionIndex(0);
+      const difficultyQuestions = questions[initialDifficulty];
+
+      // Find the first unsolved question in this difficulty
+      const firstUnsolvedIndex = difficultyQuestions.findIndex(
+        (q) => !solvedQuestions.includes(q.id)
+      );
+
+      // If there's an unsolved question, use it
+      if (firstUnsolvedIndex !== -1) {
+        setCurrentQuestionIndex(firstUnsolvedIndex);
+        setCurrentQuestion(difficultyQuestions[firstUnsolvedIndex]);
       } else {
-        // Find index of initial question
-        const difficultyQuestions = questions[initialDifficulty];
-        const index = difficultyQuestions.findIndex(
-          (q) => q.id === (initialQuestion.id || "")
-        );
-        setCurrentQuestionIndex(index !== -1 ? index : 0);
-        setCurrentQuestion(
-          index !== -1 ? difficultyQuestions[index] : difficultyQuestions[0]
-        );
+        // All questions are solved, just use the first one
+        setCurrentQuestionIndex(0);
+        setCurrentQuestion(difficultyQuestions[0]);
       }
 
       // Ensure difficulty is set in parent component
@@ -299,7 +299,7 @@ const QuestionPanel = ({
         onDifficultySelected(initialDifficulty);
       }
     }
-  }, [initialDifficulty, initialQuestion, onDifficultySelected, questions]);
+  }, [initialDifficulty, questions, solvedQuestions, onDifficultySelected]);
 
   const handleSelectDifficulty = (difficulty) => {
     if (questions[difficulty]?.length > 0) {
@@ -335,9 +335,22 @@ const QuestionPanel = ({
   const handleNextQuestion = () => {
     if (selectedDifficulty && questions[selectedDifficulty]?.length > 0) {
       const difficultyQuestions = questions[selectedDifficulty];
-      const nextIndex = (currentQuestionIndex + 1) % difficultyQuestions.length;
-      const nextQuestion = difficultyQuestions[nextIndex];
 
+      // Try to find the next unsolved question
+      let nextIndex = (currentQuestionIndex + 1) % difficultyQuestions.length;
+      const startIndex = nextIndex; // Save where we started to avoid infinite loop
+
+      // Keep looking for an unsolved question, but don't loop forever
+      while (solvedQuestions.includes(difficultyQuestions[nextIndex].id)) {
+        nextIndex = (nextIndex + 1) % difficultyQuestions.length;
+
+        // If we've checked all questions and they're all solved, just use the next one
+        if (nextIndex === startIndex) {
+          break;
+        }
+      }
+
+      const nextQuestion = difficultyQuestions[nextIndex];
       setCurrentQuestionIndex(nextIndex);
       setCurrentQuestion(nextQuestion);
 
