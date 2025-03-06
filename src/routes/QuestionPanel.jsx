@@ -1,10 +1,11 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useMemo, useCallback } from "react";
 import {
   FileText,
   TrendingUp,
   Award,
   AlignLeft,
   Maximize,
+  Minimize,
   Check,
   Save,
 } from "lucide-react";
@@ -19,7 +20,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 
-// Difficulty levels
+// Difficulty levels - moved outside component to prevent recreation on each render
 const DIFFICULTY_LEVELS = [
   {
     value: "easy",
@@ -53,8 +54,8 @@ const DIFFICULTY_LEVELS = [
   },
 ];
 
-// Redesigned Difficulty Card
-const DifficultyCard = ({ difficulty, isSelected, onSelect }) => {
+// Memoized DifficultyCard component to prevent unnecessary re-renders
+const DifficultyCard = memo(({ difficulty, isSelected, onSelect }) => {
   const {
     value,
     label,
@@ -65,6 +66,11 @@ const DifficultyCard = ({ difficulty, isSelected, onSelect }) => {
     description,
   } = difficulty;
 
+  // Memoize handler to prevent recreation on each render
+  const handleClick = useCallback(() => {
+    onSelect(value);
+  }, [onSelect, value]);
+
   return (
     <div
       className={`cursor-pointer p-2 sm:p-4 rounded-lg border-2 transition-all ${
@@ -72,7 +78,7 @@ const DifficultyCard = ({ difficulty, isSelected, onSelect }) => {
           ? `border-${textColor.split("-")[1]}-500 shadow-lg`
           : "border-gray-700 hover:border-gray-500"
       } flex flex-col`}
-      onClick={() => onSelect(value)}
+      onClick={handleClick}
     >
       <div className="flex items-center mb-2 sm:mb-3">
         <div className={`p-1 sm:p-2 rounded-md ${color} mr-2 sm:mr-3`}>
@@ -92,7 +98,9 @@ const DifficultyCard = ({ difficulty, isSelected, onSelect }) => {
       </button>
     </div>
   );
-};
+});
+
+DifficultyCard.displayName = "DifficultyCard";
 
 DifficultyCard.propTypes = {
   difficulty: PropTypes.object.isRequired,
@@ -100,10 +108,10 @@ DifficultyCard.propTypes = {
   onSelect: PropTypes.func.isRequired,
 };
 
-// Modify QuestionContent to handle null questions and solved status
+// QuestionContent component - already memoized
 const QuestionContent = memo(
   ({ question, difficulty, isSolved, onMarkSolved, isSubmitting }) => {
-    // If no question is provided, return null or a placeholder
+    // If no question is provided, return early
     if (!question) {
       return (
         <div className="p-2 text-center text-gray-400">
@@ -112,8 +120,10 @@ const QuestionContent = memo(
       );
     }
 
-    const { label, textColor } =
-      DIFFICULTY_LEVELS.find((d) => d.value === difficulty) || {};
+    const difficultyInfo = DIFFICULTY_LEVELS.find(
+      (d) => d.value === difficulty
+    );
+    const { label, textColor } = difficultyInfo || {};
 
     const { title, description, example } = question;
 
@@ -186,6 +196,25 @@ QuestionContent.propTypes = {
   isSubmitting: PropTypes.bool,
 };
 
+// Tips component - extracted to reduce complexity
+const CodingTips = memo(() => (
+  <div className="mt-4 sm:mt-8 p-2 sm:p-4 bg-gray-900 rounded-lg border border-gray-700">
+    <h3 className="text-sm sm:text-lg font-semibold mb-2">
+      Coding Challenge Tips
+    </h3>
+    <ul className="list-disc pl-4 sm:pl-5 space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-300">
+      <li>Read the problem statement carefully before starting</li>
+      <li>Consider edge cases in your solution</li>
+      <li>Test your code with various inputs</li>
+      <li>Optimize your solution if time permits</li>
+      <li>Start with a brute force approach, then refine</li>
+    </ul>
+  </div>
+));
+
+CodingTips.displayName = "CodingTips";
+
+// Main QuestionPanel component
 const QuestionPanel = ({
   onToggleFullScreen,
   onDifficultySelected,
@@ -193,7 +222,7 @@ const QuestionPanel = ({
   onExitChallenge,
   initialDifficulty,
   initialQuestion,
-  userId, // Add userId prop for tracking solved questions
+  userId,
 }) => {
   const [selectedDifficulty, setSelectedDifficulty] =
     useState(initialDifficulty);
@@ -210,74 +239,78 @@ const QuestionPanel = ({
   const [solvedQuestions, setSolvedQuestions] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allSolved, setAllSolved] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
-  // Fetch all questions from Firestore and user's solved questions on component mount
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Fetch questions
-        const questionsCollection = collection(db, "Questions");
+  // Fetch data using useCallback to prevent recreation on each render
+  const fetchData = useCallback(async () => {
+    if (!userId) return;
 
-        const fetchDifficultyQuestions = async (difficulty) => {
-          const docRef = doc(questionsCollection, difficulty);
-          const docSnap = await getDoc(docRef);
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch questions
+      const questionsCollection = collection(db, "Questions");
 
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            // Convert the document data object to an array of questions
-            return Object.keys(data).map((key) => ({
-              id: key,
-              title: data[key].question || data[key].title,
-              description: data[key].description,
-              example: data[key].example,
-            }));
-          }
-          return [];
-        };
+      const fetchDifficultyQuestions = async (difficulty) => {
+        const docRef = doc(questionsCollection, difficulty);
+        const docSnap = await getDoc(docRef);
 
-        const [easy, medium, hard] = await Promise.all([
-          fetchDifficultyQuestions("Easy"),
-          fetchDifficultyQuestions("Medium"),
-          fetchDifficultyQuestions("Hard"),
-        ]);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          // Convert the document data object to an array of questions
+          return Object.keys(data).map((key) => ({
+            id: key,
+            title: data[key].question || data[key].title,
+            description: data[key].description,
+            example: data[key].example,
+          }));
+        }
+        return [];
+      };
 
-        setQuestions({
-          easy,
-          medium,
-          hard,
-        });
+      const [easy, medium, hard] = await Promise.all([
+        fetchDifficultyQuestions("Easy"),
+        fetchDifficultyQuestions("Medium"),
+        fetchDifficultyQuestions("Hard"),
+      ]);
 
-        // Fetch user's solved questions if userId is provided
-        if (userId) {
-          const userDocRef = doc(db, "users", userId);
-          const userDocSnap = await getDoc(userDocRef);
+      setQuestions({
+        easy,
+        medium,
+        hard,
+      });
 
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            if (userData.solvedQuestions) {
-              setSolvedQuestions(userData.solvedQuestions);
-            }
+      // Fetch user's solved questions if userId is provided
+      if (userId) {
+        const userDocRef = doc(db, "users", userId);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          if (userData.solvedQuestions) {
+            setSolvedQuestions(userData.solvedQuestions);
           }
         }
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to load questions. Please try again later.");
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchData();
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load questions. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
   }, [userId]);
 
-  // Effect to handle initial difficulty and question
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Handle initial difficulty and question selection
   useEffect(() => {
     if (initialDifficulty && questions[initialDifficulty]?.length > 0) {
       setSelectedDifficulty(initialDifficulty);
       setShowSelection(false);
-      setLoading(true); // Show loading while checking
+      setLoading(true);
       setAllSolved(false);
 
       const difficultyQuestions = questions[initialDifficulty];
@@ -287,46 +320,47 @@ const QuestionPanel = ({
         (q) => !solvedQuestions.includes(q.id)
       );
 
-      // If there's an unsolved question, use it
       if (firstUnsolvedIndex !== -1) {
         setCurrentQuestionIndex(firstUnsolvedIndex);
         setCurrentQuestion(difficultyQuestions[firstUnsolvedIndex]);
       } else {
-        // All questions are solved
         setAllSolved(true);
         setCurrentQuestionIndex(0);
         setCurrentQuestion(difficultyQuestions[0]);
       }
 
-      // Ensure difficulty is set in parent component
       if (onDifficultySelected) {
         onDifficultySelected(initialDifficulty);
       }
 
-      setLoading(false); // Hide loading after question is found
+      setLoading(false);
     }
   }, [initialDifficulty, questions, solvedQuestions, onDifficultySelected]);
 
-  const handleSelectDifficulty = (difficulty) => {
-    if (questions[difficulty]?.length > 0) {
-      setSelectedDifficulty(difficulty);
-      setShowSelection(false);
+  // Memoize handlers to prevent recreation on each render
+  const handleSelectDifficulty = useCallback(
+    (difficulty) => {
+      if (questions[difficulty]?.length > 0) {
+        setSelectedDifficulty(difficulty);
+        setShowSelection(false);
 
-      // Select first question of the difficulty
-      const firstQuestion = questions[difficulty][0];
-      setCurrentQuestion(firstQuestion);
-      setCurrentQuestionIndex(0);
+        // Select first question of the difficulty
+        const firstQuestion = questions[difficulty][0];
+        setCurrentQuestion(firstQuestion);
+        setCurrentQuestionIndex(0);
 
-      // Notify parent component
-      if (onDifficultySelected) {
-        onDifficultySelected(difficulty);
+        // Notify parent component
+        if (onDifficultySelected) {
+          onDifficultySelected(difficulty);
+        }
+      } else {
+        setError(`No questions available for ${difficulty} difficulty.`);
       }
-    } else {
-      setError(`No questions available for ${difficulty} difficulty.`);
-    }
-  };
+    },
+    [questions, onDifficultySelected]
+  );
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setSelectedDifficulty(null);
     setShowSelection(true);
     setCurrentQuestionIndex(0);
@@ -336,17 +370,17 @@ const QuestionPanel = ({
     if (onExitChallenge) {
       onExitChallenge();
     }
-  };
+  }, [onExitChallenge]);
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = useCallback(() => {
     if (selectedDifficulty && questions[selectedDifficulty]?.length > 0) {
-      setLoading(true); // Show loading while finding next unsolved question
+      setLoading(true);
 
       const difficultyQuestions = questions[selectedDifficulty];
 
       // Try to find the next unsolved question
       let nextIndex = (currentQuestionIndex + 1) % difficultyQuestions.length;
-      const startIndex = nextIndex; // Save where we started to avoid infinite loop
+      const startIndex = nextIndex;
 
       // Keep looking for an unsolved question, but don't loop forever
       let foundUnsolved = false;
@@ -364,11 +398,7 @@ const QuestionPanel = ({
         }
       }
 
-      if (foundUnsolved) {
-        setAllSolved(false);
-      } else {
-        setAllSolved(true);
-      }
+      setAllSolved(!foundUnsolved);
 
       const nextQuestion = difficultyQuestions[nextIndex];
       setCurrentQuestionIndex(nextIndex);
@@ -379,17 +409,24 @@ const QuestionPanel = ({
         onNextQuestion(nextQuestion);
       }
 
-      setLoading(false); // Hide loading after question is found
+      setLoading(false);
     }
-  };
+  }, [
+    selectedDifficulty,
+    questions,
+    currentQuestionIndex,
+    solvedQuestions,
+    onNextQuestion,
+  ]);
 
-  // Check if current question is solved
-  const isQuestionSolved = () => {
-    return currentQuestion && solvedQuestions.includes(currentQuestion.id);
-  };
+  // Check if current question is solved - memoized to prevent recalculation
+  const isQuestionSolved = useMemo(
+    () => currentQuestion && solvedQuestions.includes(currentQuestion.id),
+    [currentQuestion, solvedQuestions]
+  );
 
   // Mark current question as solved
-  const handleMarkSolved = async () => {
+  const handleMarkSolved = useCallback(async () => {
     if (!userId) {
       setError(
         "You need to be logged in to save your progress. Please sign in."
@@ -397,32 +434,23 @@ const QuestionPanel = ({
       return;
     }
 
-    if (!currentQuestion || isQuestionSolved() || isSubmitting) {
+    if (!currentQuestion || isQuestionSolved || isSubmitting) {
       return;
     }
 
     setIsSubmitting(true);
     try {
       const userDocRef = doc(db, "users", userId);
-
-      // Check if user document exists
       const userDocSnap = await getDoc(userDocRef);
 
       if (userDocSnap.exists()) {
-        // Update existing document with the new solved question
         await updateDoc(userDocRef, {
           solvedQuestions: arrayUnion(currentQuestion.id),
         });
-        console.log("Question marked as solved (updated):", currentQuestion.id);
       } else {
-        // Create new user document with solved questions array
         await setDoc(userDocRef, {
           solvedQuestions: [currentQuestion.id],
         });
-        console.log(
-          "Question marked as solved (new user doc):",
-          currentQuestion.id
-        );
       }
 
       // Update local state
@@ -433,10 +461,100 @@ const QuestionPanel = ({
     } finally {
       setIsSubmitting(false);
     }
+  }, [userId, currentQuestion, isQuestionSolved, isSubmitting]);
+
+  // Render different screens conditionally
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center h-full">
+          <p className="text-gray-400">Loading questions...</p>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="p-4 text-center text-red-400">
+          <p>{error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="mt-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+          >
+            Dismiss
+          </button>
+        </div>
+      );
+    }
+
+    if (showSelection) {
+      return (
+        <div className="p-1 sm:p-2">
+          <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-6 text-center">
+            Select Difficulty Level
+          </h2>
+          <div className="grid grid-cols-1 gap-2 sm:gap-4">
+            {DIFFICULTY_LEVELS.map((difficulty) => (
+              <DifficultyCard
+                key={difficulty.value}
+                difficulty={difficulty}
+                isSelected={selectedDifficulty === difficulty.value}
+                onSelect={handleSelectDifficulty}
+              />
+            ))}
+          </div>
+          <CodingTips />
+        </div>
+      );
+    }
+
+    if (allSolved) {
+      return (
+        <div className="flex flex-col justify-center items-center h-full p-4 text-center">
+          <div className="text-2xl text-green-500 mb-4">
+            <Check size={48} />
+          </div>
+          <h2 className="text-xl font-bold mb-3 text-green-400">
+            Great! All available questions are solved.
+          </h2>
+          <p className="text-gray-400 mb-6">
+            You have completed all questions in this difficulty level.
+          </p>
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-medium text-sm transition-colors"
+          >
+            Choose Another Difficulty
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <QuestionContent
+        question={currentQuestion}
+        difficulty={selectedDifficulty}
+        isSolved={isQuestionSolved}
+        onMarkSolved={handleMarkSolved}
+        isSubmitting={isSubmitting}
+      />
+    );
+  };
+
+  const handleToggleFullScreen = () => {
+    setIsFullScreen((prev) => !prev);
+    // Call the parent handler if provided
+    if (onToggleFullScreen) {
+      onToggleFullScreen();
+    }
   };
 
   return (
-    <div className="p-1 sm:p-2 md:p-3 flex flex-col h-full">
+    <div
+      className={`p-1 sm:p-2 md:p-3 flex flex-col ${
+        isFullScreen ? "fixed inset-0 z-50 bg-gray-900" : "h-full"
+      }`}
+    >
       <div className="sticky top-0 bg-gray-800 z-10">
         <div className="flex justify-between items-center pb-2 border-b border-gray-700 mb-2">
           <div className="flex items-center gap-1 sm:gap-2">
@@ -470,88 +588,23 @@ const QuestionPanel = ({
               </>
             )}
             <button
-              onClick={onToggleFullScreen}
+              onClick={handleToggleFullScreen}
               className="p-1 hover:bg-gray-700 rounded transition-colors"
-              aria-label="Toggle question fullscreen"
+              aria-label={
+                isFullScreen ? "Exit fullscreen" : "Toggle question fullscreen"
+              }
             >
-              <Maximize size={16} className="sm:w-5 sm:h-5" />
+              {isFullScreen ? (
+                <Minimize size={16} className="sm:w-5 sm:h-5" />
+              ) : (
+                <Maximize size={16} className="sm:w-5 sm:h-5" />
+              )}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="flex-grow overflow-auto">
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <p className="text-gray-400">Loading questions...</p>
-          </div>
-        ) : error ? (
-          <div className="p-4 text-center text-red-400">
-            <p>{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="mt-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm"
-            >
-              Dismiss
-            </button>
-          </div>
-        ) : showSelection ? (
-          <div className="p-1 sm:p-2">
-            <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-6 text-center">
-              Select Difficulty Level
-            </h2>
-            <div className="grid grid-cols-1 gap-2 sm:gap-4">
-              {DIFFICULTY_LEVELS.map((difficulty) => (
-                <DifficultyCard
-                  key={difficulty.value}
-                  difficulty={difficulty}
-                  isSelected={selectedDifficulty === difficulty.value}
-                  onSelect={handleSelectDifficulty}
-                />
-              ))}
-            </div>
-
-            <div className="mt-4 sm:mt-8 p-2 sm:p-4 bg-gray-900 rounded-lg border border-gray-700">
-              <h3 className="text-sm sm:text-lg font-semibold mb-2">
-                Coding Challenge Tips
-              </h3>
-              <ul className="list-disc pl-4 sm:pl-5 space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-300">
-                <li>Read the problem statement carefully before starting</li>
-                <li>Consider edge cases in your solution</li>
-                <li>Test your code with various inputs</li>
-                <li>Optimize your solution if time permits</li>
-                <li>Start with a brute force approach, then refine</li>
-              </ul>
-            </div>
-          </div>
-        ) : allSolved ? (
-          <div className="flex flex-col justify-center items-center h-full p-4 text-center">
-            <div className="text-2xl text-green-500 mb-4">
-              <Check size={48} />
-            </div>
-            <h2 className="text-xl font-bold mb-3 text-green-400">
-              Great! All available questions are solved.
-            </h2>
-            <p className="text-gray-400 mb-6">
-              You have completed all questions in this difficulty level.
-            </p>
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-medium text-sm transition-colors"
-            >
-              Choose Another Difficulty
-            </button>
-          </div>
-        ) : (
-          <QuestionContent
-            question={currentQuestion}
-            difficulty={selectedDifficulty}
-            isSolved={isQuestionSolved()}
-            onMarkSolved={handleMarkSolved}
-            isSubmitting={isSubmitting}
-          />
-        )}
-      </div>
+      <div className="flex-grow overflow-auto">{renderContent()}</div>
     </div>
   );
 };
@@ -563,7 +616,7 @@ QuestionPanel.propTypes = {
   onExitChallenge: PropTypes.func,
   initialDifficulty: PropTypes.string,
   initialQuestion: PropTypes.object,
-  userId: PropTypes.string, // Add userId prop
+  userId: PropTypes.string,
 };
 
 QuestionPanel.defaultProps = {
