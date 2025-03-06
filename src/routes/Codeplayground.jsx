@@ -509,6 +509,7 @@ const CodePlayground = () => {
             } overflow-auto`}
           >
             <QuestionPanel
+              onToggleFullScreen={toggleFullScreen}
               onDifficultySelected={handleDifficultySelected}
               onNextQuestion={handleNextQuestion}
               onExitChallenge={handleExitChallenge}
