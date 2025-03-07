@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, Routes, Route, useLocation } from "react-router-dom";
-import { BookText, TrendingUp, Star, Clock } from "lucide-react";
+import { BookText, TrendingUp, Star, Clock, Menu, X } from "lucide-react";
 
 // Blog category components
 import WisdomWall from "./blog/WisdomWall";
@@ -12,10 +12,13 @@ import ScribbledTank from "./blog/ScribbledTank";
 function Blogs() {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("/blogs");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Set active tab based on current location
     setActiveTab(location.pathname);
+    // Close mobile menu when route changes
+    setMobileMenuOpen(false);
   }, [location.pathname]);
 
   // Define sub-navbar links
@@ -80,16 +83,36 @@ function Blogs() {
     },
   ];
 
+  // Toggle mobile menu
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
   return (
     <div className="min-h-screen bg-green-50">
       {/* Main content wrapper with proper stacking context */}
       <div className="relative">
-        {/* Sub Navbar with fixed width and proper handling of space */}
+        {/* Sub Navbar with responsive design */}
         <div className="sticky top-16 z-50 bg-green-50 shadow-sm border-b border-gray-200 w-full">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-14">
-              {/* Add min-width to prevent compression and use flex-shrink-0 on items */}
-              <div className="flex items-center justify-center space-x-1 sm:space-x-4 overflow-x-auto scrollbar-hide min-w-0 flex-grow">
+              {/* Mobile: Hamburger Menu Button */}
+              <button
+                className="md:hidden flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none"
+                onClick={toggleMobileMenu}
+                aria-label="Toggle navigation menu"
+              >
+                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+
+              {/* Active Tab Display for Mobile */}
+              <div className="md:hidden flex-1 text-center font-medium text-gray-800">
+                {subNavLinks.find((link) => link.path === activeTab)?.label ||
+                  "Blogs"}
+              </div>
+
+              {/* Desktop Navigation */}
+              <div className="hidden md:flex items-center justify-start space-x-1 sm:space-x-4 overflow-x-auto scrollbar-hide min-w-0 flex-grow">
                 {subNavLinks.map((link) => (
                   <Link
                     key={link.path}
@@ -107,6 +130,29 @@ function Blogs() {
               </div>
             </div>
           </div>
+
+          {/* Mobile Menu Dropdown */}
+          {mobileMenuOpen && (
+            <div className="md:hidden bg-white shadow-lg border-t border-gray-100 absolute w-full z-50">
+              <div className="px-2 pt-2 pb-3 space-y-1">
+                {subNavLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`flex items-center px-3 py-3 text-base font-medium rounded-lg ${
+                      activeTab === link.path
+                        ? "bg-gray-100 text-green-600"
+                        : "text-gray-700 hover:bg-gray-50 hover:text-green-500"
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span className="mr-3">{link.icon}</span>
+                    <span>{link.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Content Area with proper spacing */}
@@ -116,32 +162,32 @@ function Blogs() {
               path="/"
               element={
                 <>
-                  {/* Hero Section */}
-                  <div className="text-center mb-10 mt-6">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-3">
+                  {/* Hero Section - Responsive Text Sizes */}
+                  <div className="text-center mb-8 mt-4 sm:mb-10 sm:mt-6">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-2 sm:mb-3">
                       🏛️ Wisdom Wall
                     </h1>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-2">
                       ✨ A space where knowledge meets experience—read, learn,
                       and grow!
                     </p>
                   </div>
 
-                  {/* Category Cards Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+                  {/* Category Cards Grid - Responsive Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-16">
                     {categoryCards.map((card) => (
                       <Link
                         key={card.id}
                         to={card.path}
-                        className={`flex flex-col p-6 rounded-xl shadow-sm ${card.bgColor} ${card.hoverColor} transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md`}
+                        className={`flex flex-col p-4 sm:p-6 rounded-xl shadow-sm ${card.bgColor} ${card.hoverColor} transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md`}
                       >
-                        <div className={`mb-4 ${card.iconColor}`}>
+                        <div className={`mb-3 sm:mb-4 ${card.iconColor}`}>
                           {card.icon}
                         </div>
-                        <h3 className="text-xl font-semibold mb-2 text-gray-800">
+                        <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2 text-gray-800">
                           {card.title}
                         </h3>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-600 text-xs sm:text-sm">
                           {card.description}
                         </p>
                       </Link>
