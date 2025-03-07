@@ -71,7 +71,7 @@ function App() {
       <div style={{ paddingTop: navbarHeight ? `${navbarHeight}px` : "5rem" }}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/blogs" element={<Blogs />} />
+          <Route path="/blogs/*" element={<Blogs />} />
           <Route path="/contactus" element={<Contactus />} />
           <Route path="/codeplayground" element={<Codeplayground />} />
           <Route path="/auth" element={<AuthPage />} />
